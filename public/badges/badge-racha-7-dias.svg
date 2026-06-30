@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="140" viewBox="0 0 120 140" role="img">
+  <title>Racha 7 días</title>
+  <desc>Insignia de racha de 7 días — LecturaMetrica</desc>
+  <defs>
+    <style>
+      .lbl { font-family: system-ui, sans-serif; font-size: 11px; font-weight: 600; text-anchor: middle; fill: #E2E8F0; }
+    </style>
+  </defs>
+
+  <!-- Hexagon outer -->
+  <polygon points="60,2 115,30 115,88 60,116 5,88 5,30" fill="#1A2332" stroke="#F59E0B" stroke-width="2.5"/>
+  <!-- Hexagon inner -->
+  <polygon points="60,12 105,36 105,82 60,106 15,82 15,36" fill="#0D1117"/>
+  <!-- Corner dots -->
+  <circle cx="60"  cy="2"   r="4.5" fill="#F59E0B"/>
+  <circle cx="115" cy="30"  r="4.5" fill="#F59E0B"/>
+  <circle cx="115" cy="88"  r="4.5" fill="#F59E0B"/>
+  <circle cx="60"  cy="116" r="4.5" fill="#F59E0B"/>
+  <circle cx="5"   cy="88"  r="4.5" fill="#F59E0B"/>
+  <circle cx="5"   cy="30"  r="4.5" fill="#F59E0B"/>
+
+  <!-- Glow ring -->
+  <circle cx="60" cy="57" r="30" fill="#F59E0B" opacity="0.07"/>
+
+  <!-- Big flame -->
+  <path d="M60,26 C60,26 78,48 74,63 C71,73 65,77 60,77 C55,77 49,73 46,63 C42,48 60,26 60,26Z" fill="#F59E0B" opacity="0.9"/>
+  <!-- Flame inner -->
+  <path d="M60,38 C60,38 70,54 68,63 C66.5,69 63,71.5 60,71.5 C57,71.5 53.5,69 52,63 C50,54 60,38 60,38Z" fill="#FEF3C7"/>
+  <!-- "7" inside flame -->
+  <text x="60" y="68" style="font-family:system-ui,sans-serif;font-size:20px;font-weight:700;fill:#0D1117;text-anchor:middle;">7</text>
+
+  <!-- 7 day dots row -->
+  <g fill="#F59E0B">
+    <circle cx="22" cy="93" r="4.5" opacity="0.4"/>
+    <circle cx="33" cy="93" r="4.5" opacity="0.5"/>
+    <circle cx="44" cy="93" r="4.5" opacity="0.6"/>
+    <circle cx="55" cy="93" r="4.5" opacity="0.7"/>
+    <circle cx="66" cy="93" r="4.5" opacity="0.8"/>
+    <circle cx="77" cy="93" r="4.5" opacity="0.9"/>
+    <circle cx="88" cy="93" r="4.5" opacity="1"/>
+  </g>
+
+  <text x="60" y="132" class="lbl">Racha 7 días</text>
+</svg>

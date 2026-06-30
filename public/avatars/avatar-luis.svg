@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120" role="img">
+  <title>Avatar Luis — Explorador nocturno</title>
+  <desc>Avatar de perfil masculino con piel oscura y paleta rosa — LecturaMetrica</desc>
+  <defs>
+    <clipPath id="cc"><circle cx="60" cy="60" r="56"/></clipPath>
+  </defs>
+
+  <circle cx="60" cy="60" r="58" fill="#1A2332" stroke="#F43F5E" stroke-width="3"/>
+  <circle cx="60" cy="60" r="54" fill="#1C0515" clip-path="url(#cc)"/>
+
+  <!-- Shoulders -->
+  <ellipse cx="60" cy="115" rx="42" ry="28" fill="#4C0519" clip-path="url(#cc)"/>
+  <ellipse cx="60" cy="100" rx="30" ry="20" fill="#BE123C" clip-path="url(#cc)"/>
+
+  <!-- Head -->
+  <circle cx="60" cy="52" r="22" fill="#78350F"/>
+  <!-- Curly/locs hair -->
+  <circle cx="46" cy="36" r="8"  fill="#0C0A09"/>
+  <circle cx="54" cy="30" r="9"  fill="#0C0A09"/>
+  <circle cx="63" cy="29" r="9"  fill="#0C0A09"/>
+  <circle cx="72" cy="34" r="8"  fill="#0C0A09"/>
+  <circle cx="77" cy="43" r="7"  fill="#0C0A09"/>
+  <circle cx="40" cy="44" r="7"  fill="#0C0A09"/>
+  <ellipse cx="60" cy="32" rx="18" ry="10" fill="#0C0A09"/>
+  <!-- Ears -->
+  <circle cx="38" cy="52" r="5" fill="#78350F"/>
+  <circle cx="82" cy="52" r="5" fill="#78350F"/>
+
+  <!-- Eyes -->
+  <ellipse cx="51" cy="50" rx="3.5" ry="4" fill="#0F172A"/>
+  <ellipse cx="69" cy="50" rx="3.5" ry="4" fill="#0F172A"/>
+  <circle cx="52.2" cy="48.8" r="1.2" fill="#fff"/>
+  <circle cx="70.2" cy="48.8" r="1.2" fill="#fff"/>
+
+  <!-- Eyebrows -->
+  <path d="M45,44 Q51,41.5 57,44" fill="none" stroke="#0C0A09" stroke-width="2" stroke-linecap="round"/>
+  <path d="M63,44 Q69,41.5 75,44" fill="none" stroke="#0C0A09" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Smile -->
+  <path d="M52,63 Q60,70 68,63" fill="none" stroke="#7C2D12" stroke-width="2.5" stroke-linecap="round"/>
+
+  <!-- Cheeks -->
+  <ellipse cx="44" cy="60" rx="6" ry="3.5" fill="#F43F5E" opacity="0.2"/>
+  <ellipse cx="76" cy="60" rx="6" ry="3.5" fill="#F43F5E" opacity="0.2"/>
+
+  <!-- Badge -->
+  <circle cx="96" cy="18" r="12" fill="#F43F5E"/>
+  <text x="96" y="23" style="font-family:system-ui,sans-serif;font-size:13px;font-weight:700;fill:#fff;text-anchor:middle;">L</text>
+</svg>

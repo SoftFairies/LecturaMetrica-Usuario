@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="140" viewBox="0 0 120 140" role="img">
+  <title>Racha 15 días</title>
+  <desc>Insignia de racha de 15 días — LecturaMetrica</desc>
+  <defs>
+    <style>
+      .lbl { font-family: system-ui, sans-serif; font-size: 11px; font-weight: 600; text-anchor: middle; fill: #E2E8F0; }
+    </style>
+  </defs>
+
+  <!-- Circle outer -->
+  <circle cx="60" cy="59" r="57" fill="#1A2332" stroke="#22C55E" stroke-width="2.5"/>
+  <!-- Circle inner -->
+  <circle cx="60" cy="59" r="49" fill="#0D1117"/>
+  <!-- Compass dots -->
+  <circle cx="60"  cy="2"   r="4.5" fill="#22C55E"/>
+  <circle cx="117" cy="59"  r="4.5" fill="#22C55E"/>
+  <circle cx="60"  cy="116" r="4.5" fill="#22C55E"/>
+  <circle cx="3"   cy="59"  r="4.5" fill="#22C55E"/>
+
+  <!-- 15-cell calendar grid (3 rows × 5 cols) -->
+  <!-- Row 1 - dim (days 1-5) -->
+  <g fill="#22C55E" opacity="0.2">
+    <rect x="26" y="28" width="10" height="10" rx="2"/>
+    <rect x="40" y="28" width="10" height="10" rx="2"/>
+    <rect x="54" y="28" width="10" height="10" rx="2"/>
+    <rect x="68" y="28" width="10" height="10" rx="2"/>
+    <rect x="82" y="28" width="10" height="10" rx="2"/>
+  </g>
+  <!-- Row 2 - medium (days 6-10) -->
+  <g fill="#22C55E" opacity="0.5">
+    <rect x="26" y="42" width="10" height="10" rx="2"/>
+    <rect x="40" y="42" width="10" height="10" rx="2"/>
+    <rect x="54" y="42" width="10" height="10" rx="2"/>
+    <rect x="68" y="42" width="10" height="10" rx="2"/>
+    <rect x="82" y="42" width="10" height="10" rx="2"/>
+  </g>
+  <!-- Row 3 - bright (days 11-15) -->
+  <g fill="#22C55E" opacity="0.9">
+    <rect x="26" y="56" width="10" height="10" rx="2"/>
+    <rect x="40" y="56" width="10" height="10" rx="2"/>
+    <rect x="54" y="56" width="10" height="10" rx="2"/>
+    <rect x="68" y="56" width="10" height="10" rx="2"/>
+    <rect x="82" y="56" width="10" height="10" rx="2"/>
+  </g>
+
+  <!-- "15" large number -->
+  <text x="60" y="95" style="font-family:system-ui,sans-serif;font-size:26px;font-weight:700;fill:#22C55E;text-anchor:middle;">15</text>
+
+  <!-- Checkmark badge at top -->
+  <circle cx="60" cy="14" r="8" fill="#22C55E"/>
+  <path d="M55.5,14 L58.5,17 L64.5,11" fill="none" stroke="#0D1117" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <text x="60" y="132" class="lbl">Racha 15 días</text>
+</svg>
