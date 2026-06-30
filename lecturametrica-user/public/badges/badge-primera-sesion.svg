@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="140" viewBox="0 0 120 140" role="img">
+  <title>Primera sesión de lectura</title>
+  <desc>Insignia por iniciar la primera sesión de lectura — LecturaMetrica</desc>
+  <defs>
+    <style>
+      .lbl { font-family: system-ui, sans-serif; font-size: 10.5px; font-weight: 600; text-anchor: middle; fill: #E2E8F0; }
+    </style>
+  </defs>
+
+  <!-- Hexagon outer -->
+  <polygon points="60,2 115,30 115,88 60,116 5,88 5,30" fill="#1A2332" stroke="#D4890A" stroke-width="2.5"/>
+  <!-- Hexagon inner -->
+  <polygon points="60,12 105,36 105,82 60,106 15,82 15,36" fill="#0D1117"/>
+  <!-- Corner dots -->
+  <circle cx="60"  cy="2"   r="4" fill="#D4890A"/>
+  <circle cx="115" cy="30"  r="4" fill="#D4890A"/>
+  <circle cx="115" cy="88"  r="4" fill="#D4890A"/>
+  <circle cx="60"  cy="116" r="4" fill="#D4890A"/>
+  <circle cx="5"   cy="88"  r="4" fill="#D4890A"/>
+  <circle cx="5"   cy="30"  r="4" fill="#D4890A"/>
+
+  <!-- Open book -->
+  <path d="M22,72 L22,36 C22,36 40,31 60,38 C80,31 98,36 98,36 L98,72 C98,72 80,67 60,74 C40,67 22,72 22,72Z" fill="#D4890A" opacity="0.85"/>
+  <!-- Spine -->
+  <line x1="60" y1="74" x2="60" y2="38" stroke="#0D1117" stroke-width="1.8"/>
+  <!-- Text lines left page -->
+  <line x1="28" y1="44" x2="56" y2="42" stroke="#0D1117" stroke-width="1.5" opacity="0.45"/>
+  <line x1="28" y1="50" x2="56" y2="48" stroke="#0D1117" stroke-width="1.5" opacity="0.4"/>
+  <line x1="28" y1="56" x2="52" y2="54" stroke="#0D1117" stroke-width="1.5" opacity="0.35"/>
+  <line x1="28" y1="62" x2="54" y2="60" stroke="#0D1117" stroke-width="1.5" opacity="0.3"/>
+  <!-- Text lines right page -->
+  <line x1="64" y1="42" x2="92" y2="44" stroke="#0D1117" stroke-width="1.5" opacity="0.45"/>
+  <line x1="64" y1="48" x2="92" y2="50" stroke="#0D1117" stroke-width="1.5" opacity="0.4"/>
+  <line x1="64" y1="54" x2="88" y2="56" stroke="#0D1117" stroke-width="1.5" opacity="0.35"/>
+  <line x1="64" y1="60" x2="90" y2="62" stroke="#0D1117" stroke-width="1.5" opacity="0.3"/>
+
+  <!-- Clock / timer overlay -->
+  <circle cx="60" cy="83" r="14" fill="#D4890A"/>
+  <circle cx="60" cy="83" r="11" fill="#0D1117"/>
+  <line x1="60" y1="76" x2="60" y2="83" stroke="#D4890A" stroke-width="2" stroke-linecap="round"/>
+  <line x1="60" y1="83" x2="65" y2="87" stroke="#D4890A" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="60" cy="83" r="2" fill="#D4890A"/>
+  <!-- Clock tick marks -->
+  <line x1="60" y1="73"  x2="60" y2="75"  stroke="#D4890A" stroke-width="1.2" opacity="0.6"/>
+  <line x1="60" y1="91"  x2="60" y2="93"  stroke="#D4890A" stroke-width="1.2" opacity="0.6"/>
+  <line x1="50" y1="83"  x2="52" y2="83"  stroke="#D4890A" stroke-width="1.2" opacity="0.6"/>
+  <line x1="68" y1="83"  x2="70" y2="83"  stroke="#D4890A" stroke-width="1.2" opacity="0.6"/>
+
+  <text x="60" y="131" class="lbl">Primera sesión</text>
+</svg>

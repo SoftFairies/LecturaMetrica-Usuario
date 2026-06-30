@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="140" viewBox="0 0 120 140" role="img">
+  <title>Primera racha</title>
+  <desc>Insignia de primera racha — LecturaMetrica</desc>
+  <defs>
+    <style>
+      .lbl { font-family: system-ui, sans-serif; font-size: 11px; font-weight: 600; text-anchor: middle; fill: #E2E8F0; }
+      .sub { font-family: system-ui, sans-serif; font-size: 9px; text-anchor: middle; fill: #64748B; }
+    </style>
+  </defs>
+
+  <!-- Hexagon outer ring -->
+  <polygon points="60,2 115,30 115,88 60,116 5,88 5,30" fill="#1A2332" stroke="#D4890A" stroke-width="2.5"/>
+  <!-- Hexagon inner -->
+  <polygon points="60,12 105,36 105,82 60,106 15,82 15,36" fill="#0D1117"/>
+  <!-- Corner dots -->
+  <circle cx="60" cy="2"   r="4" fill="#D4890A" opacity="0.9"/>
+  <circle cx="115" cy="30" r="4" fill="#D4890A" opacity="0.9"/>
+  <circle cx="115" cy="88" r="4" fill="#D4890A" opacity="0.9"/>
+  <circle cx="60" cy="116" r="4" fill="#D4890A" opacity="0.9"/>
+  <circle cx="5" cy="88"  r="4" fill="#D4890A" opacity="0.9"/>
+  <circle cx="5" cy="30"  r="4" fill="#D4890A" opacity="0.9"/>
+
+  <!-- Flame body -->
+  <path d="M60,30 C60,30 75,46 71,57 C68.5,64 64,67 60,67 C56,67 51.5,64 49,57 C46,46 60,30 60,30Z" fill="#D4890A" opacity="0.9"/>
+  <!-- Flame inner -->
+  <path d="M60,42 C60,42 67,52 65,59 C63.5,63 61.5,65 60,65 C58.5,65 56.5,63 55,59 C53,52 60,42 60,42Z" fill="#F59E0B"/>
+  <!-- Flame core -->
+  <circle cx="60" cy="63" r="3.5" fill="#FEF3C7"/>
+
+  <!-- Roman numeral I -->
+  <rect x="57" y="73" width="6" height="20" rx="2" fill="#D4890A"/>
+  <rect x="52" y="73" width="16" height="3.5" rx="1.5" fill="#D4890A"/>
+  <rect x="52" y="90" width="16" height="3.5" rx="1.5" fill="#D4890A"/>
+
+  <!-- Label -->
+  <text x="60" y="130" class="lbl">Primera racha</text>
+</svg>

@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="140" viewBox="0 0 120 140" role="img">
+  <title>Lector nocturno</title>
+  <desc>Insignia de lector nocturno — LecturaMetrica</desc>
+  <defs>
+    <style>
+      .lbl { font-family: system-ui, sans-serif; font-size: 11px; font-weight: 600; text-anchor: middle; fill: #E2E8F0; }
+    </style>
+  </defs>
+
+  <!-- Circle outer -->
+  <circle cx="60" cy="59" r="57" fill="#1A2332" stroke="#F43F5E" stroke-width="2.5"/>
+  <!-- Circle inner -->
+  <circle cx="60" cy="59" r="49" fill="#0D1117"/>
+  <!-- Compass dots -->
+  <circle cx="60"  cy="2"   r="4.5" fill="#F43F5E"/>
+  <circle cx="117" cy="59"  r="4.5" fill="#F43F5E"/>
+  <circle cx="60"  cy="116" r="4.5" fill="#F43F5E"/>
+  <circle cx="3"   cy="59"  r="4.5" fill="#F43F5E"/>
+
+  <!-- Night sky background -->
+  <circle cx="60" cy="59" r="38" fill="#0D1117"/>
+
+  <!-- Stars scattered -->
+  <circle cx="32" cy="30" r="2"   fill="#E2E8F0" opacity="0.9"/>
+  <circle cx="78" cy="25" r="1.4" fill="#E2E8F0" opacity="0.7"/>
+  <circle cx="88" cy="42" r="1.8" fill="#E2E8F0" opacity="0.8"/>
+  <circle cx="24" cy="50" r="1.2" fill="#E2E8F0" opacity="0.6"/>
+  <circle cx="90" cy="62" r="1.5" fill="#E2E8F0" opacity="0.7"/>
+  <circle cx="40" cy="24" r="1.2" fill="#E2E8F0" opacity="0.5"/>
+  <circle cx="66" cy="33" r="1"   fill="#E2E8F0" opacity="0.6"/>
+  <circle cx="95" cy="50" r="1"   fill="#E2E8F0" opacity="0.5"/>
+  <circle cx="28" cy="70" r="1.3" fill="#E2E8F0" opacity="0.55"/>
+
+  <!-- Crescent moon (large) -->
+  <circle cx="60" cy="54" r="22" fill="#F43F5E" opacity="0.9"/>
+  <circle cx="70" cy="47" r="19" fill="#0D1117"/>
+
+  <!-- Owl eyes (detail) -->
+  <circle cx="38" cy="40" r="6"   fill="#0D1117"/>
+  <circle cx="38" cy="40" r="4"   fill="#F43F5E" opacity="0.8"/>
+  <circle cx="37" cy="39" r="1.3" fill="#0D1117"/>
+  <circle cx="28" cy="40" r="6"   fill="#0D1117"/>
+  <circle cx="28" cy="40" r="4"   fill="#F43F5E" opacity="0.8"/>
+  <circle cx="27" cy="39" r="1.3" fill="#0D1117"/>
+
+  <!-- Open book (mini) at bottom of moon -->
+  <path d="M42,74 L42,88 C42,88 51,84 60,88 C69,84 78,88 78,88 L78,74 C78,74 69,70 60,74 C51,70 42,74 42,74Z" fill="#F43F5E" opacity="0.75"/>
+  <line x1="60" y1="88" x2="60" y2="74" stroke="#0D1117" stroke-width="1.4"/>
+
+  <!-- Moon glow halo subtle -->
+  <circle cx="60" cy="54" r="24" fill="none" stroke="#F43F5E" stroke-width="1" opacity="0.2"/>
+
+  <text x="60" y="132" class="lbl">Lector nocturno</text>
+</svg>

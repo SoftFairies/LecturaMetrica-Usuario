@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="140" viewBox="0 0 120 140" role="img">
+  <title>Primer buzón</title>
+  <desc>Insignia por enviar la primera carta literaria — LecturaMetrica</desc>
+  <defs>
+    <style>
+      .lbl { font-family: system-ui, sans-serif; font-size: 11px; font-weight: 600; text-anchor: middle; fill: #E2E8F0; }
+    </style>
+  </defs>
+
+  <!-- Circle outer -->
+  <circle cx="60" cy="59" r="57" fill="#1A2332" stroke="#14B8A6" stroke-width="2.5"/>
+  <!-- Circle inner -->
+  <circle cx="60" cy="59" r="49" fill="#0D1117"/>
+  <!-- Compass dots -->
+  <circle cx="60"  cy="2"   r="4.5" fill="#14B8A6"/>
+  <circle cx="117" cy="59"  r="4.5" fill="#14B8A6"/>
+  <circle cx="60"  cy="116" r="4.5" fill="#14B8A6"/>
+  <circle cx="3"   cy="59"  r="4.5" fill="#14B8A6"/>
+
+  <!-- Envelope body -->
+  <rect x="18" y="36" width="84" height="54" rx="6" fill="#14B8A6" opacity="0.85"/>
+  <!-- Envelope flap bottom diagonal lines -->
+  <path d="M18,62 L60,82 L102,62" fill="none" stroke="#0D1117" stroke-width="2" stroke-linejoin="round"/>
+  <!-- Open top flap -->
+  <path d="M18,36 L36,22 L84,22 L102,36" fill="#0D1117" stroke="#14B8A6" stroke-width="1.5"/>
+  <path d="M36,22 L60,40 L84,22" fill="none" stroke="#14B8A6" stroke-width="1.5" stroke-linejoin="round"/>
+
+  <!-- Letter peeking from top -->
+  <rect x="32" y="14" width="56" height="36" rx="4" fill="#F0FDFA" opacity="0.92"/>
+  <rect x="40" y="20" width="30" height="2.5" rx="1" fill="#14B8A6" opacity="0.6"/>
+  <rect x="40" y="26" width="22" height="2.5" rx="1" fill="#14B8A6" opacity="0.4"/>
+  <rect x="40" y="32" width="26" height="2.5" rx="1" fill="#14B8A6" opacity="0.4"/>
+  <rect x="40" y="38" width="18" height="2.5" rx="1" fill="#14B8A6" opacity="0.3"/>
+
+  <!-- Star badge bottom-right -->
+  <circle cx="88" cy="82" r="11" fill="#14B8A6"/>
+  <path d="M88,73 L90,79 L96.5,79.5 L91.8,83.5 L93.5,90 L88,86.5 L82.5,90 L84.2,83.5 L79.5,79.5 L86,79 Z" fill="#fff" opacity="0.9"/>
+
+  <text x="60" y="132" class="lbl">Primer buzón</text>
+</svg>
