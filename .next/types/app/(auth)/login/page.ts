@@ -1,4 +1,4 @@
-// File: C:\Users\patyc\Downloads\LecturaMetrica-Usuario\lecturametrica-user\app\(auth)\login\page.tsx
+// File: C:\Users\patyc\OneDrive\Documents\LecturaMetrica-Usuario\app\(auth)\login\page.tsx
 import * as entry from '../../../../../app/(auth)/login/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

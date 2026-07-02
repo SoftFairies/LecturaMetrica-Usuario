@@ -1,13 +1,14 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   BookOpen, Library, Clock, BarChart2, Mail, Sun, Moon, LogOut,
   ChevronsLeft, ChevronsRight,
 } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import ProfileModal from "@/components/ProfileModal";
+import { useAuth } from "@/lib/auth-context";
 
 const NAV = [
   { href: "/biblioteca", icon: Library, label: "Biblioteca" },
@@ -27,10 +28,17 @@ const BADGES = [
 
 export default function AppSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const darkMode = theme === "dark";
   const [collapsed, setCollapsed] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    router.push("/login");
+  };
 
   return (
     <>
@@ -136,8 +144,8 @@ export default function AppSidebar() {
             )}
           </button>
 
-          <Link
-            href="/login"
+          <button
+            onClick={handleLogout}
             title={collapsed ? "Cerrar sesión" : undefined}
             className={`flex items-center gap-2 px-3 py-2 text-slate-500 hover:text-slate-300 text-sm transition-colors w-full rounded-xl hover:bg-[#1A2332] ${
               collapsed ? "justify-center" : ""
@@ -145,7 +153,7 @@ export default function AppSidebar() {
           >
             <LogOut size={14} className="flex-shrink-0" />
             {!collapsed && "Cerrar sesión"}
-          </Link>
+          </button>
         </div>
       </aside>
 
@@ -175,13 +183,13 @@ export default function AppSidebar() {
           </div>
           <span className="text-[9px] font-medium">Perfil</span>
         </button>
-        <Link
-          href="/login"
+        <button
+          onClick={handleLogout}
           className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all text-slate-500 hover:text-slate-300"
         >
           <LogOut size={18} strokeWidth={1.8} />
           <span className="text-[9px] font-medium">Salir</span>
-        </Link>
+        </button>
       </nav>
 
       {showProfile && <ProfileModal onClose={() => setShowProfile(false)} />}

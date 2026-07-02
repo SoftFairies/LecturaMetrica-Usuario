@@ -5,17 +5,35 @@ import { useRouter } from "next/navigation";
 import AuthLayout from "@/components/AuthLayout";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+import { useAuth } from "@/lib/auth-context";
+import { ApiError } from "@/data/api";
 
 export default function RegisterPage() {
   const [name, setName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
+  const { register } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    router.push("/onboarding");
+    setError(null);
+    setSubmitting(true);
+    try {
+      await register({ name, lastname: lastName, email, password });
+      router.push("/onboarding");
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message || "No se pudo crear la cuenta");
+      } else {
+        setError("No se pudo conectar con el servidor");
+      }
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -75,8 +93,14 @@ export default function RegisterPage() {
           required
         />
 
-        <Button variant="primary" size="lg" fullWidth type="submit">
-          Continuar →
+        {error && (
+          <p className="text-red-400 text-sm" role="alert">
+            {error}
+          </p>
+        )}
+
+        <Button variant="primary" size="lg" fullWidth type="submit" disabled={submitting}>
+          {submitting ? "Creando cuenta..." : "Continuar →"}
         </Button>
       </form>
 

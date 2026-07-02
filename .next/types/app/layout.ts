@@ -1,4 +1,4 @@
-// File: C:\Users\patyc\Downloads\LecturaMetrica-Usuario\lecturametrica-user\app\layout.tsx
+// File: C:\Users\patyc\OneDrive\Documents\LecturaMetrica-Usuario\app\layout.tsx
 import * as entry from '../../../app/layout.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
