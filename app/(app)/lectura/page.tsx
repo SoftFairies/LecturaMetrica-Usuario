@@ -1,15 +1,47 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { Play, Square, Pause, ChevronDown, ChevronUp, Minus, Plus } from "lucide-react";
+import { api } from "@/data/api";
+import Swal from "sweetalert2";
 
 export default function LecturaPage() {
-  const [page, setPage] = useState(463);
+  const [page, setPage] = useState(1);
   const [running, setRunning] = useState(false);
   const [totalSeconds, setTotalSeconds] = useState(0);
   const [notes, setNotes] = useState("");
   const [manualMinutes, setManualMinutes] = useState(30);
   const [showManual, setShowManual] = useState(false);
+  const [enrollmentId, setEnrollmentId] = useState<string | null>(null);
+  const [bookTitle, setBookTitle] = useState<string | null>(null);
+  const [bookAuthor, setBookAuthor] = useState<string | null>(null);
+  const [totalPages, setTotalPages] = useState(0);
+  const [bookStatus, setBookStatus] = useState<string | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      try {
+        const libs = await api.library.getAll();
+        if (!active || !libs || !libs.length) return;
+        const sel = libs.find((l) => l.readingStatus?.name === "Leyendo") || libs[0];
+        setEnrollmentId(sel.id);
+        setBookTitle(sel.book?.title ?? null);
+        setBookAuthor(
+          (sel.book?.authors && sel.book.authors.map((a: any) => a.name).join(", ")) || null
+        );
+        setBookStatus(sel.readingStatus?.name ?? null);
+        setPage(sel.currentPage ?? 1);
+        setTotalPages(sel.book?.defaultPages ?? sel.book?.defaultChapters ?? 0);
+      } catch (e) {
+        // ignore and keep defaults
+      }
+    };
+    void load();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (running) {
@@ -20,8 +52,9 @@ export default function LecturaPage() {
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [running]);
 
-  const TOTAL_PAGES = 662;
-  const progress = Math.round((page / TOTAL_PAGES) * 100);
+  const maxPages = totalPages > 0 ? totalPages : 1;
+  const effectivePages = maxPages;
+  const progress = Math.round((page / effectivePages) * 100);
   const displayMins = Math.floor(totalSeconds / 60);
   const displaySecs = totalSeconds % 60;
   const sessionMins = Math.floor(totalSeconds / 60);
@@ -54,10 +87,16 @@ export default function LecturaPage() {
                 style={{ background: "linear-gradient(160deg,#c2410c,#7c2d12)", height: "88px" }}
               />
               <div className="min-w-0">
-                <h2 className="text-base font-bold text-white leading-snug" style={{ fontFamily: "Georgia, serif" }}>El nombre del viento</h2>
-                <p className="text-slate-400 text-sm mt-0.5">Patrick Rothfuss</p>
+                <h2 className="text-base font-bold text-white leading-snug" style={{ fontFamily: "Georgia, serif" }}>
+                  {bookTitle ?? "Libro no encontrado"}
+                </h2>
+                <p className="text-slate-400 text-sm mt-0.5">{bookAuthor ?? "Autor desconocido"}</p>
                 <div className="flex gap-0.5 mt-1.5">
-                  {[1,2,3,4,5].map(s => <span key={s} className="text-amber-400 text-sm">★</span>)}
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <span key={s} className="text-amber-400 text-sm">
+                      ★
+                    </span>
+                  ))}
                 </div>
                 <div className="mt-3">
                   <div className="flex items-center justify-between text-xs mb-1">
@@ -67,7 +106,9 @@ export default function LecturaPage() {
                   <div className="w-full h-1.5 bg-[#2E3D52] rounded-full overflow-hidden">
                     <div className="h-full bg-amber-500 rounded-full transition-all" style={{ width: `${progress}%` }} />
                   </div>
-                  <p className="text-[10px] text-slate-600 mt-1">{page} / {TOTAL_PAGES} páginas</p>
+                  <p className="text-[10px] text-slate-600 mt-1">
+                    {page} / {totalPages || "?"} páginas
+                  </p>
                 </div>
               </div>
             </div>
@@ -86,19 +127,19 @@ export default function LecturaPage() {
                   <input
                     type="number"
                     value={page}
-                    onChange={e => setPage(Math.min(TOTAL_PAGES, Math.max(1, Number(e.target.value))))}
+                    onChange={e => setPage(Math.min(maxPages, Math.max(1, Number(e.target.value))))}
                     className="bg-transparent text-xl font-bold text-amber-400 text-center w-full focus:outline-none"
                     min={1}
-                    max={TOTAL_PAGES}
+                    max={maxPages}
                   />
                 </div>
                 <button
-                  onClick={() => setPage(p => Math.min(TOTAL_PAGES, p + 1))}
+                  onClick={() => setPage(p => Math.min(maxPages, p + 1))}
                   className="w-10 h-10 bg-[#1A2332] border border-[#2E3D52] rounded-xl text-slate-400 hover:text-white hover:border-[#3A4D66] flex items-center justify-center transition-all"
                 >
                   <Plus size={14} />
                 </button>
-                <div className="text-slate-500 text-sm pl-1">/ {TOTAL_PAGES}</div>
+                <div className="text-slate-500 text-sm pl-1">/ {maxPages}</div>
               </div>
             </div>
 
@@ -182,7 +223,7 @@ export default function LecturaPage() {
             </div>
 
             {/* Controls */}
-            <div className="space-y-2.5">
+              <div className="space-y-2.5">
               <div className="flex gap-2">
                 <button
                   onClick={() => setRunning(r => !r)}
@@ -198,7 +239,18 @@ export default function LecturaPage() {
                   <Square size={14} />
                 </button>
               </div>
-              <button className="w-full py-3 bg-transparent border border-amber-700/40 text-amber-400 font-semibold text-sm rounded-xl hover:bg-amber-700/10 transition-all">
+              <button onClick={async () => {
+                try {
+                  if (!enrollmentId) {
+                    await Swal.fire({ icon: 'info', title: 'Sin libro seleccionado', text: 'No se encontró una entrada de biblioteca para actualizar.' });
+                    return;
+                  }
+                  await api.library.updateProgress(enrollmentId, { currentPage: page });
+                  await Swal.fire({ icon: 'success', title: 'Sesión guardada', text: 'Progreso actualizado correctamente.' });
+                } catch (err: any) {
+                  await Swal.fire({ icon: 'error', title: 'Error', text: err?.message || 'No se pudo guardar la sesión.' });
+                }
+              }} className="w-full py-3 bg-transparent border border-amber-700/40 text-amber-400 font-semibold text-sm rounded-xl hover:bg-amber-700/10 transition-all">
                 Finalizar y guardar sesión
               </button>
             </div>

@@ -1,3 +1,9 @@
 {
-  "/(auth)/login/page": "app/(auth)/login/page.js"
+  "/_not-found/page": "app/_not-found/page.js",
+  "/manifest.json/route": "app/manifest.json/route.js",
+  "/(auth)/login/page": "app/(auth)/login/page.js",
+  "/(app)/buzon/page": "app/(app)/buzon/page.js",
+  "/(app)/biblioteca/page": "app/(app)/biblioteca/page.js",
+  "/(app)/estadisticas/page": "app/(app)/estadisticas/page.js",
+  "/(app)/lectura/page": "app/(app)/lectura/page.js"
 }

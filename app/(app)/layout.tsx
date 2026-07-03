@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useEffect } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import AppSidebar from "@/components/AppSidebar";
 import { useAuth } from "@/lib/auth-context";
@@ -8,12 +8,21 @@ import { useAuth } from "@/lib/auth-context";
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { isAuthenticated, loading } = useAuth();
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
       router.replace("/login");
     }
   }, [loading, isAuthenticated, router]);
+
+  if (!mounted) {
+    return null;
+  }
 
   if (loading) {
     return (

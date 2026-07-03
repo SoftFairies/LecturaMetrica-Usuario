@@ -7,6 +7,7 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import { useAuth } from "@/lib/auth-context";
 import { ApiError } from "@/data/api";
+import Swal from "sweetalert2";
 
 export default function RegisterPage() {
   const [name, setName] = useState("");
@@ -18,12 +19,25 @@ export default function RegisterPage() {
   const router = useRouter();
   const { register } = useAuth();
 
+  const validatePassword = (value: string) => {
+    return /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/.test(value);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    if (!validatePassword(password)) {
+      await Swal.fire({
+        icon: "warning",
+        title: "Contraseña insegura",
+        text: "La contraseña debe tener al menos 8 caracteres, una mayúscula, un número y un carácter especial.",
+      });
+      return;
+    }
     setSubmitting(true);
     try {
       await register({ name, lastname: lastName, email, password });
+      await Swal.fire({ icon: "success", title: "Cuenta creada", text: "Bienvenido. Completa tus preferencias." });
       router.push("/onboarding");
     } catch (err) {
       if (err instanceof ApiError) {

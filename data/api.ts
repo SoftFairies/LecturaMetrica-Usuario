@@ -1,59 +1,12 @@
-/**
- * data/api.ts
- *
- * Capa única de acceso a la API REST del backend (SoftFairies/Backend, rama feature/).
- * Generado y verificado 1:1 contra el OpenAPI real desplegado en:
- *   https://users-production-2f97.up.railway.app/v3/api-docs
- *
- * Módulos: auth, user, author, badge, format, gender, picture, readingStatus,
- *   book, library, preferences (recommendation-routing).
- *
- * Notas importantes confirmadas por el spec:
- *   - Los IDs de author/badge/format/gender/picture/readingStatus son Long (number).
- *   - Los IDs de user/book/library/preferences son UUID (string).
- *   - GET /api/v1/library devuelve un array plano (UserLibrary[]), no paginado.
- *   - GET /api/v1/preferences devuelve un RecommendationResponse (tus preferencias
- *     actuales); GET /api/v1/preferences/recommendations devuelve BookResponse[]
- *     (las recomendaciones calculadas a partir de esas preferencias).
- *
- * Configuración requerida:
- *   - Define NEXT_PUBLIC_API_URL en tu .env.local
- *     Ej: NEXT_PUBLIC_API_URL=https://users-production-2f97.up.railway.app
- *     Si no se define, se usa http://localhost:8080 por defecto.
- *
- * Uso:
- *   import { api } from "@/data/api";
- *   const { token } = await api.auth.login({ email, password });
- *   const libros = await api.authors.getAll({ page: 0, size: 10 });
- */
-
-// ============================================================
-// Configuración base
-// ============================================================
-
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "";
-// ⚠️ Por defecto es "" (ruta relativa). El navegador llama a
-// /api/v1/... en TU MISMO dominio (localhost:3000), y next.config.js
-// se encarga de reenviar esas peticiones al backend real (Railway)
-// server-to-server, evitando CORS por completo sin tocar el backend.
-//
-// Si prefieres llamar directo al backend (sin proxy), define
-// NEXT_PUBLIC_API_URL en .env.local — en ese caso el backend SÍ
-// necesita CORS configurado para tu origen.
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "";
 
 const API_PREFIX = "/api/v1";
 
-// ============================================================
-// Tipos compartidos
-// ============================================================
-
-/** Respuesta paginada de Spring Data (org.springframework.data.domain.Page) */
 export interface Page<T> {
   content: T[];
   totalElements: number;
   totalPages: number;
-  number: number; // página actual (0-indexed)
+  number: number;
   size: number;
   first: boolean;
   last: boolean;
@@ -63,7 +16,9 @@ export interface Page<T> {
 export interface PageParams {
   page?: number;
   size?: number;
-  sort?: string; // ej: "name,asc"
+  sort?: string;
+  q?: string;
+  [key: string]: string | number | boolean | undefined;
 }
 
 export interface ApiErrorBody {
@@ -87,10 +42,6 @@ export class ApiError extends Error {
   }
 }
 
-// ============================================================
-// Manejo del token (JWT)
-// ============================================================
-
 const TOKEN_KEY = "lecturametrica_token";
 
 export const tokenStorage = {
@@ -108,10 +59,6 @@ export const tokenStorage = {
   },
 };
 
-// ============================================================
-// Cliente HTTP base
-// ============================================================
-
 function buildQuery<T extends object>(params?: T): string {
   if (!params) return "";
   const usp = new URLSearchParams();
@@ -124,10 +71,9 @@ function buildQuery<T extends object>(params?: T): string {
 
 interface RequestOptions {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
-  body?: unknown; // se serializa a JSON
-  formData?: FormData; // si viene, se envía como multipart/form-data
+  body?: unknown;
+  formData?: FormData;
   query?: object;
-  /** Adjunta el header Authorization: Bearer <token>. Default: true */
   auth?: boolean;
 }
 
@@ -176,16 +122,16 @@ function toFormData<T extends object>(fields: T): FormData {
   return fd;
 }
 
-// ============================================================
-// Módulo: auth  (/api/v1/auth)  — público, sin token
-// ============================================================
+// ---------------------------------------------------------------------------
+// Auth / Users
+// ---------------------------------------------------------------------------
 
 export interface RegisterRequest {
   name: string;
   lastname?: string;
   email: string;
   password: string;
-  roleId?: string; // UUID
+  roleId?: string;
 }
 
 export interface LoginRequest {
@@ -194,18 +140,14 @@ export interface LoginRequest {
 }
 
 export interface AuthResponse {
-  id: string; // UUID
+  id: string;
   email: string;
   role: string;
   token: string;
 }
 
-// ============================================================
-// Módulo: user  (/api/v1/users)
-// ============================================================
-
 export interface UpdateUserRequest {
-  name: string;
+  name?: string;
   lastname?: string;
   email?: string;
   password?: string;
@@ -220,13 +162,13 @@ export interface UserResponse {
   roleName: string;
   pictureId?: number;
   pictureUrl?: string;
+  profilePicture?: PictureResponse | null;
   active: boolean;
 }
 
-// ============================================================
-// Catálogos "planos" (name + description): author, format,
-// gender, readingStatus
-// ============================================================
+// ---------------------------------------------------------------------------
+// Catálogos simples (authors, formats, genders, reading-status)
+// ---------------------------------------------------------------------------
 
 export interface CatalogPlainRequest {
   name: string;
@@ -262,9 +204,9 @@ export interface ReadingStatusResponse {
   description?: string;
 }
 
-// ============================================================
-// Catálogos con imagen (multipart): badge, picture
-// ============================================================
+// ---------------------------------------------------------------------------
+// Catálogos con imagen (badges, pictures)
+// ---------------------------------------------------------------------------
 
 export interface BadgeResponse {
   id: number;
@@ -291,14 +233,9 @@ export interface CatalogMultipartUpdate {
   description?: string;
 }
 
-// ============================================================
-// Helpers genéricos de CRUD (evitan repetir lo mismo 4 veces)
-// ============================================================
-
-// ============================================================
-// Módulo: book  (/api/v1/books) — catálogo de libros
-// ✅ Tipos confirmados con el OpenAPI real (id = UUID, no number)
-// ============================================================
+// ---------------------------------------------------------------------------
+// Books
+// ---------------------------------------------------------------------------
 
 export interface BookRequest {
   isbn?: string;
@@ -327,22 +264,19 @@ export interface BookResponse {
   genres: GenderResponse[];
 }
 
-// ============================================================
-// Módulo: library  (/api/v1/library) — biblioteca personal del
-// usuario autenticado. ✅ Tipos confirmados con el OpenAPI real.
-// ============================================================
+// ---------------------------------------------------------------------------
+// Library (librería personal del usuario autenticado)
+// ---------------------------------------------------------------------------
 
-/** POST /api/v1/library — agrega un libro (existente o nuevo) a tu biblioteca */
 export interface LibraryEnrollmentRequest {
-  /** UUID de un libro ya existente en el catálogo */
+  /** Para agregar un libro que YA existe en el catálogo (/books). */
   bookId?: string;
-  /** Datos para crear el libro sobre la marcha si no existe en el catálogo */
+  /** Para dar de alta un libro nuevo al mismo tiempo que se enrola. */
   bookData?: BookRequest;
   readingStatusId?: number;
   currentPage?: number;
 }
 
-/** POST /api/v1/library/{id}/customization */
 export interface BookCustomizationRequest {
   customTitle?: string;
   customChapters?: number;
@@ -351,7 +285,6 @@ export interface BookCustomizationRequest {
   customCoverValue?: string;
 }
 
-/** PATCH /api/v1/library/{id} — progreso de lectura */
 export interface LibraryProgressRequest {
   readingStatusId?: number;
   currentChapter?: number;
@@ -359,7 +292,6 @@ export interface LibraryProgressRequest {
   isFavorite?: boolean;
 }
 
-/** Entrada de la biblioteca del usuario (GET /api/v1/library) */
 export interface UserLibrary {
   id: string; // UUID
   user: UserResponse;
@@ -367,10 +299,10 @@ export interface UserLibrary {
   readingStatus: ReadingStatusResponse;
   currentChapter?: number;
   currentPage?: number;
+  /** En la respuesta el campo se llama "favorite", no "isFavorite". */
   favorite?: boolean;
 }
 
-/** Respuesta de POST /api/v1/library/{id}/customization */
 export interface UserBookCustomization {
   id: string; // UUID
   user: UserResponse;
@@ -382,23 +314,20 @@ export interface UserBookCustomization {
   customCoverValue?: string;
 }
 
-// ============================================================
-// Módulo: preferences / recommendation (/api/v1/preferences)
-// ✅ Tipos confirmados con el OpenAPI real.
-// ============================================================
+// ---------------------------------------------------------------------------
+// Preferences / Recommendations
+// ---------------------------------------------------------------------------
 
 export interface PreferenceItem {
   id: number;
   name: string;
 }
 
-/** PUT y POST /api/v1/preferences */
 export interface RecommendationRequest {
   formatIds?: number[];
   genreIds?: number[];
 }
 
-/** GET /api/v1/preferences */
 export interface RecommendationResponse {
   id: string; // UUID
   userId: string; // UUID
@@ -406,27 +335,41 @@ export interface RecommendationResponse {
   genres: PreferenceItem[];
 }
 
-// ============================================================
-// Helpers genéricos de CRUD (evitan repetir lo mismo 4 veces)
-// ============================================================
 
-/** CRUD para catálogos simples: { name, description } sin imagen */
+// ---------------------------------------------------------------------------
+// Mailbox (cartas anónimas)
+// ---------------------------------------------------------------------------
+
+export interface MailboxSendRequest {
+  bookId: string;
+  content: string;
+}
+
+export interface MailboxLetterResponse {
+  id: number;
+  bookId: string;
+  senderId: string;
+  content: string;
+  sentAt: string;
+  unlockAt: string;
+}
+
+// ---------------------------------------------------------------------------
+// Factories CRUD
+// ---------------------------------------------------------------------------
+
 function crudPlain<T>(basePath: string) {
   return {
     getAll: (params?: PageParams) => request<Page<T>>(basePath, { query: params }),
     getById: (id: number) => request<T>(`${basePath}/${id}`),
-    /** Requiere rol ADMIN en el backend */
     create: (data: CatalogPlainRequest) =>
       request<T>(basePath, { method: "POST", body: data }),
-    /** Requiere rol ADMIN en el backend */
     update: (id: number, data: UpdateCatalogPlainRequest) =>
       request<T>(`${basePath}/${id}`, { method: "PUT", body: data }),
-    /** Requiere rol ADMIN en el backend */
     remove: (id: number) => request<void>(`${basePath}/${id}`, { method: "DELETE" }),
   };
 }
 
-/** CRUD para catálogos con imagen (multipart/form-data) */
 function crudMultipart<T>(basePath: string) {
   return {
     getAll: (params?: PageParams) => request<Page<T>>(basePath, { query: params }),
@@ -442,9 +385,9 @@ function crudMultipart<T>(basePath: string) {
   };
 }
 
-// ============================================================
-// API pública — todos los recursos que el frontend consume
-// ============================================================
+// ---------------------------------------------------------------------------
+// API
+// ---------------------------------------------------------------------------
 
 export const api = {
   auth: {
@@ -457,56 +400,77 @@ export const api = {
   },
 
   users: {
-    /** GET /api/v1/users/me — usuario autenticado actual */
+    /** GET /api/v1/users/me */
     getMe: () => request<UserResponse>("/users/me"),
-    /** PUT /api/v1/users/me — actualiza al usuario autenticado */
+    /** PUT /api/v1/users/me */
     updateMe: (data: UpdateUserRequest) =>
       request<UserResponse>("/users/me", { method: "PUT", body: data }),
-    /** DELETE /api/v1/users/me — elimina (soft delete) al usuario autenticado */
+    /** DELETE /api/v1/users/me */
     deleteMe: () => request<void>("/users/me", { method: "DELETE" }),
-    /** GET /api/v1/users — requiere rol ADMIN */
+    /** GET /api/v1/users — ADMIN */
     getAll: (params?: PageParams) => request<Page<UserResponse>>("/users", { query: params }),
-    /** GET /api/v1/users/{id} — requiere rol ADMIN */
+    /** GET /api/v1/users/{id} — ADMIN */
     getById: (id: string) => request<UserResponse>(`/users/${id}`),
-    /** POST /api/v1/users — crea usuario, requiere rol ADMIN */
+    /** POST /api/v1/users — ADMIN */
     create: (data: RegisterRequest) =>
       request<AuthResponse>("/users", { method: "POST", body: data }),
   },
 
   /** /api/v1/authors */
   authors: crudPlain<AuthorResponse>("/authors"),
-
   /** /api/v1/formats */
   formats: crudPlain<FormatResponse>("/formats"),
-
   /** /api/v1/genders */
   genders: crudPlain<GenderResponse>("/genders"),
-
   /** /api/v1/reading-status */
   readingStatus: crudPlain<ReadingStatusResponse>("/reading-status"),
-
   /** /api/v1/badges (con imagen) */
   badges: crudMultipart<BadgeResponse>("/badges"),
-
   /** /api/v1/pictures (con imagen) */
-  pictures: crudMultipart<PictureResponse>("/pictures"),
-
-  /** /api/v1/books (catálogo de libros, CRUD completo) — id = UUID */
-  books: {
-    getAll: (params?: PageParams) => request<Page<BookResponse>>("/books", { query: params }),
-    getById: (id: string) => request<BookResponse>(`/books/${id}`),
-    create: (data: BookRequest) => request<BookResponse>("/books", { method: "POST", body: data }),
-    update: (id: string, data: BookRequest) =>
-      request<BookResponse>(`/books/${id}`, { method: "PUT", body: data }),
-    remove: (id: string) => request<void>(`/books/${id}`, { method: "DELETE" }),
+  pictures: {
+    getAll: (params?: PageParams) => request<Page<PictureResponse>>("/pictures", { query: params }),
+    getById: (id: number) => request<PictureResponse>(`/pictures/${id}`),
+    create: (data: CatalogMultipartCreate) =>
+      request<PictureResponse>("/pictures", {
+        method: "POST",
+        formData: toFormData({
+          file: data.file,
+          name: data.name,
+          description: data.description ?? "Foto de perfil",
+        }),
+      }),
+    update: (id: number, data: CatalogMultipartUpdate) =>
+      request<PictureResponse>(`/pictures/${id}`, {
+        method: "PUT",
+        formData: toFormData(data),
+      }),
+    remove: (id: number) => request<void>(`/pictures/${id}`, { method: "DELETE" }),
   },
+
+  /**
+   * ⚠️ No confirmado contra el Swagger que revisamos juntos (no aparecía en
+   * las 10 capturas). Si al probarlo te da 404, avísame la ruta real que
+   * veas en Swagger y la corrijo.
+   */
+  gamification: {
+    getMyBadges: () => request<BadgeResponse[]>("/gamification/me/badges"),
+  },
+
+  /** /api/v1/books — id = UUID */
+books: {
+  getAll: (params?: PageParams) => request<Page<BookResponse>>("/books", { query: params }),
+  getById: (id: string) => request<BookResponse>(`/books/${id}`),
+  create: (data: BookRequest) => request<BookResponse>("/books", { method: "POST", body: data }),
+  update: (id: string, data: BookRequest) =>
+    request<BookResponse>(`/books/${id}`, { method: "PUT", body: data }),
+  remove: (id: string) => request<void>(`/books/${id}`, { method: "DELETE" }),
+},
 
   /** /api/v1/library — biblioteca personal del usuario autenticado (ids = UUID) */
   library: {
     /** GET /api/v1/library — devuelve un array plano, no paginado */
-    getAll: (params?: PageParams) =>
-      request<UserLibrary[]>("/library", { query: params }),
-    /** POST /api/v1/library — agrega un libro (existente o nuevo) a la biblioteca */
+    getAll: (params?: PageParams) => request<UserLibrary[]>("/library", { query: params }),
+    /** POST /api/v1/library */
     add: (data: LibraryEnrollmentRequest) =>
       request<void>("/library", { method: "POST", body: data }),
     /** POST /api/v1/library/{id}/customization */
@@ -515,7 +479,7 @@ export const api = {
         method: "POST",
         body: data,
       }),
-    /** PATCH /api/v1/library/{id} — actualiza el progreso de lectura */
+    /** PATCH /api/v1/library/{id} */
     updateProgress: (id: string, data: LibraryProgressRequest) =>
       request<void>(`/library/${id}`, { method: "PATCH", body: data }),
     /** DELETE /api/v1/library/{id} */
@@ -535,6 +499,18 @@ export const api = {
     /** GET /api/v1/preferences/recommendations */
     getRecommendations: () => request<BookResponse[]>("/preferences/recommendations"),
   },
+
+  /** /api/v1/mailbox */
+  mailbox: {
+  send: (data: { bookId: string; content: string }) =>
+    request<void>("/mailbox/send", {
+      method: "POST",
+      body: data,
+    }),
+
+  getReceived: () =>
+    request<any[]>("/mailbox/received"),
+},
 };
 
 export default api;
