@@ -353,6 +353,14 @@ export interface LetterResponse {
   unlockAt: string;
 }
 
+export interface RadarRandomResponse {
+  id: number;
+  title: string;
+  fact: string;
+  genre: string;
+  bookReference: string;
+}
+
 export interface UserBadgeResponse {
   badgeId: number;
   name: string;
@@ -557,6 +565,10 @@ export const api = {
     create: (data: RecommendationRequest) =>
       request<void>("/preferences", { method: "POST", body: data }),
     getRecommendations: () => request<BookResponse[]>("/preferences/recommendations"),
+  },
+
+  radar: {
+    random: () => request<RadarRandomResponse>("/radar/random"),
   },
 
   mailbox: {

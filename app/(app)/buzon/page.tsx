@@ -604,6 +604,9 @@ export default function BuzonPage() {
         <p className={`text-center text-xs ${mutedText}`}>
           Abre tu carta diaria — una recomendación anónima de otro lector
         </p>
+        <p className={`text-center text-xs ${mutedText}`}>
+          Para activarlo debes mandar tu carta anonima
+        </p>
 
         <div className="max-w-lg mx-auto">
           <div className={`text-[10px] font-bold ${mutedText} uppercase tracking-widest mb-1`}>

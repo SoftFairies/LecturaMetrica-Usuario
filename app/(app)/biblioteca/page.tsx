@@ -5,8 +5,6 @@ import {
   Search,
   Plus,
   X,
-  ChevronLeft,
-  ChevronRight,
   Trash2,
   Pencil,
   Sparkles,
@@ -47,20 +45,13 @@ interface CatalogItem {
   description?: string;
 }
 
-const FACTS = [
-  {
-    text: "El libro mas largo del mundo, 'A la recherche du temps perdu' de Proust, tiene 1.5 millones de palabras.",
-    source: "Guinness World Records",
-  },
-  {
-    text: "La primera novela del mundo se considera 'Genji Monogatari', escrita por Murasaki Shikibu en el ano 1000.",
-    source: "Historia de la Literatura",
-  },
-  {
-    text: "El promedio de lectura de un adulto es de unas 250 palabras por minuto.",
-    source: "Investigacion linguistica",
-  },
-];
+interface RadarRandomResponse {
+  id: number;
+  title: string;
+  fact: string;
+  genre: string;
+  bookReference: string;
+}
 
 const COVER_COLORS = [
   "linear-gradient(160deg,#c2410c,#7c2d12)",
@@ -105,7 +96,7 @@ const STATUS_BADGE: Record<string, string> = {
   Terminado: "bg-green-500/15 text-green-300 border-green-500/30",
   Pausado: "bg-yellow-500/15 text-yellow-300 border-yellow-500/30",
   Abandonado: "bg-red-500/15 text-red-300 border-red-500/30",
-  "Por Leer": "bg-slate-500/15 text-slate-400 border-slate-500/20",
+  "Por Leer": "bg-cyan-500/15 text-cyan-300 border-cyan-500/30",
 };
 
 const statusClass = (status: string) =>
@@ -206,33 +197,47 @@ function RecommendedBookCard({
   const tags = book.genres && book.genres[0] ? book.genres[0].name : "";
 
   return (
-    <div className="bg-gradient-to-br from-amber-900/20 via-[#111827] to-[#111827] border border-amber-700/30 rounded-2xl p-4 mb-5 flex items-start gap-4 relative">
+    <div className="rounded-2xl p-4 mb-5 flex items-start gap-4 relative border border-[#2E3D52] bg-[#111827] shadow-lg shadow-black/20 transition-colors [.light_&]:bg-white [.light_&]:border-slate-200 [.light_&]:shadow-slate-200/60 [data-theme=light_&]:bg-white [data-theme=light_&]:border-slate-200 [data-theme=light_&]:shadow-slate-200/60">
       <button
         onClick={onDismiss}
-        title="Ocultar recomendacion"
-        className="absolute top-3 right-3 w-6 h-6 rounded-full bg-black/30 flex items-center justify-center text-slate-500 hover:text-white transition-colors"
+        title="Ocultar recomendación"
+        className="absolute top-3 right-3 w-7 h-7 rounded-full bg-[#1A2332] border border-[#2E3D52] flex items-center justify-center text-slate-400 hover:text-white hover:border-amber-500/40 hover:bg-[#243044] transition-colors [.light_&]:bg-slate-100 [.light_&]:border-slate-200 [.light_&]:text-slate-500 [.light_&]:hover:text-slate-900 [data-theme=light_&]:bg-slate-100 [data-theme=light_&]:border-slate-200 [data-theme=light_&]:text-slate-500 [data-theme=light_&]:hover:text-slate-900"
       >
-        <X size={12} />
+        <X size={13} />
       </button>
 
-      <CoverThumb cover={book.cover} className="w-14 h-20 rounded-xl flex-shrink-0 border border-[#2E3D52]" />
+      <CoverThumb
+        cover={book.cover}
+        className="w-14 h-20 rounded-xl flex-shrink-0 border border-[#2E3D52] [.light_&]:border-slate-200 [data-theme=light_&]:border-slate-200"
+      />
 
-      <div className="flex-1 min-w-0 pr-6">
+      <div className="flex-1 min-w-0 pr-7">
         <div className="flex items-center gap-1.5 mb-1">
           <Sparkles size={11} className="text-amber-500 flex-shrink-0" />
           <span className="text-[9px] text-amber-500 font-bold uppercase tracking-widest">
             Recomendado para ti
           </span>
         </div>
-        <div className="font-semibold text-white text-sm leading-tight truncate">{book.title}</div>
-        <div className="text-slate-500 text-xs mt-0.5 truncate">{authorNames}</div>
-        {tags && <div className="text-[10px] text-slate-600 mt-1 truncate">{tags}</div>}
+
+        <div className="font-semibold text-white text-sm leading-tight truncate [.light_&]:text-slate-900 [data-theme=light_&]:text-slate-900">
+          {book.title}
+        </div>
+
+        <div className="text-slate-400 text-xs mt-0.5 truncate [.light_&]:text-slate-600 [data-theme=light_&]:text-slate-600">
+          {authorNames}
+        </div>
+
+        {tags && (
+          <div className="text-[10px] text-slate-500 mt-1 truncate [.light_&]:text-slate-500 [data-theme=light_&]:text-slate-500">
+            {tags}
+          </div>
+        )}
 
         <button
           type="button"
           onClick={onAdd}
           disabled={adding}
-          className="mt-2.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-amber-600/20 text-amber-400 border border-amber-600/30 hover:bg-amber-600/30 transition-colors disabled:opacity-40"
+          className="mt-2.5 text-xs font-semibold px-3.5 py-1.5 rounded-lg bg-amber-500/15 text-amber-300 border border-amber-500/30 hover:bg-amber-500/25 hover:text-amber-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed [.light_&]:bg-amber-50 [.light_&]:text-amber-700 [.light_&]:border-amber-300 [.light_&]:hover:bg-amber-100 [data-theme=light_&]:bg-amber-50 [data-theme=light_&]:text-amber-700 [data-theme=light_&]:border-amber-300 [data-theme=light_&]:hover:bg-amber-100"
         >
           {adding ? "Agregando..." : "+ Agregar a mi biblioteca"}
         </button>
@@ -1407,7 +1412,8 @@ export default function BibliotecaPage() {
   const [editBook, setEditBook] = useState<Book | null>(null);
   const [deleteBook, setDeleteBook] = useState<Book | null>(null);
   const [showAdd, setShowAdd] = useState(false);
-  const [factIdx, setFactIdx] = useState(0);
+  const [radar, setRadar] = useState<RadarRandomResponse | null>(null);
+  const [loadingRadar, setLoadingRadar] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const [recommendations, setRecommendations] = useState<BookResponse[]>([]);
@@ -1476,10 +1482,24 @@ export default function BibliotecaPage() {
     }
   };
 
+  const loadRadar = async () => {
+    setLoadingRadar(true);
+    try {
+      const response = await api.radar.random();
+      setRadar(response);
+    } catch (error) {
+      console.error("Error cargando radar:", error);
+      setRadar(null);
+    } finally {
+      setLoadingRadar(false);
+    }
+  };
+
   useEffect(() => {
     void loadLibrary();
     void loadRecommendations();
     void loadDefaults();
+    void loadRadar();
   }, []);
 
   const featuredRecommendation = useMemo(() => {
@@ -1668,31 +1688,51 @@ export default function BibliotecaPage() {
         />
       )}
 
-      <div className="bg-[#111827] border border-[#1A2332] rounded-2xl p-4 mb-5 flex items-start gap-3">
-        <div className="w-8 h-8 rounded-xl bg-amber-700/20 flex items-center justify-center flex-shrink-0">
-          <span className="text-base">Dato</span>
+      <div className="rounded-2xl p-4 mb-5 flex items-start gap-3 relative border border-[#2E3D52] bg-[#111827] shadow-lg shadow-black/20 transition-colors [.light_&]:bg-white [.light_&]:border-slate-200 [.light_&]:shadow-slate-200/60 [data-theme=light_&]:bg-white [data-theme=light_&]:border-slate-200 [data-theme=light_&]:shadow-slate-200/60">
+        <div className="w-8 h-8 rounded-xl bg-cyan-500/15 border border-cyan-500/20 flex items-center justify-center flex-shrink-0 [.light_&]:bg-cyan-50 [.light_&]:border-cyan-200 [data-theme=light_&]:bg-cyan-50 [data-theme=light_&]:border-cyan-200">
+          <Sparkles size={15} className="text-cyan-400 [.light_&]:text-cyan-600 [data-theme=light_&]:text-cyan-600" />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-[9px] text-amber-500 font-bold uppercase tracking-widest mb-1">
-            Dato curioso
+          <div className="text-[9px] text-cyan-400 font-bold uppercase tracking-widest mb-1 [.light_&]:text-cyan-600 [data-theme=light_&]:text-cyan-600">
+            Radar de lectura
           </div>
-          <p className="text-sm text-slate-300 leading-snug">{FACTS[factIdx].text}</p>
-          <p className="text-xs text-slate-600 mt-1">{"- " + FACTS[factIdx].source}</p>
+          {loadingRadar ? (
+            <p className="text-sm text-slate-400 leading-snug [.light_&]:text-slate-500 [data-theme=light_&]:text-slate-500">Cargando recomendación...</p>
+          ) : radar ? (
+            <>
+              <p className="text-sm font-semibold text-white leading-snug [.light_&]:text-slate-900 [data-theme=light_&]:text-slate-900">
+                {radar.title}
+              </p>
+              <p className="text-sm text-slate-300 leading-snug mt-1 [.light_&]:text-slate-600 [data-theme=light_&]:text-slate-600">
+                {radar.fact}
+              </p>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {radar.genre && (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 [.light_&]:bg-cyan-50 [.light_&]:text-cyan-700 [.light_&]:border-cyan-200 [data-theme=light_&]:bg-cyan-50 [data-theme=light_&]:text-cyan-700 [data-theme=light_&]:border-cyan-200">
+                    {radar.genre}
+                  </span>
+                )}
+                {radar.bookReference && (
+                  <span className="text-[10px] text-amber-400 [.light_&]:text-amber-600 [data-theme=light_&]:text-amber-600">
+                    {radar.bookReference}
+                  </span>
+                )}
+              </div>
+            </>
+          ) : (
+            <p className="text-sm text-slate-400 leading-snug [.light_&]:text-slate-500 [data-theme=light_&]:text-slate-500">
+              No se pudo cargar el radar de lectura.
+            </p>
+          )}
         </div>
-        <div className="flex gap-1 flex-shrink-0">
-          <button
-            onClick={() => setFactIdx((i) => (i - 1 + FACTS.length) % FACTS.length)}
-            className="w-6 h-6 rounded-full bg-[#1A2332] border border-[#2E3D52] text-slate-400 hover:text-white flex items-center justify-center transition-colors"
-          >
-            <ChevronLeft size={11} />
-          </button>
-          <button
-            onClick={() => setFactIdx((i) => (i + 1) % FACTS.length)}
-            className="w-6 h-6 rounded-full bg-[#1A2332] border border-[#2E3D52] text-slate-400 hover:text-white flex items-center justify-center transition-colors"
-          >
-            <ChevronRight size={11} />
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => void loadRadar()}
+          disabled={loadingRadar}
+          className="text-[10px] font-semibold px-3 py-1.5 rounded-lg bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 hover:bg-cyan-500/25 transition-colors disabled:opacity-40 flex-shrink-0 [.light_&]:bg-cyan-50 [.light_&]:text-cyan-700 [.light_&]:border-cyan-200 [.light_&]:hover:bg-cyan-100 [data-theme=light_&]:bg-cyan-50 [data-theme=light_&]:text-cyan-700 [data-theme=light_&]:border-cyan-200 [data-theme=light_&]:hover:bg-cyan-100"
+        >
+          Nuevo
+        </button>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3 mb-5">
