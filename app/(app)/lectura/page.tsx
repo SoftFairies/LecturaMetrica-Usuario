@@ -128,14 +128,6 @@ async function createReadingSessionByLibraryId(
         window.localStorage.getItem("lecturametrica_token")
       : null;
 
-  /*
-    El backend espera:
-    POST /api/v1/reading-sessions/{libraryId}
-    Body: { secondsRead, pagesRead, chaptersRead }
-
-    Usamos ruta relativa /api/v1/... para pasar por el rewrite/proxy de Next
-    y evitar CORS.
-  */
   const response = await fetch(`/api/v1/reading-sessions/${libraryId}`, {
     method: "POST",
     headers: {
@@ -152,7 +144,6 @@ async function createReadingSessionByLibraryId(
       const errorBody = await response.json();
       message = errorBody?.message || message;
     } catch {
-      // La respuesta no era JSON.
     }
 
     throw new Error(message);
@@ -202,7 +193,6 @@ async function updateLibraryProgressById(
       const errorBody = await response.json();
       message = errorBody?.message || message;
     } catch {
-      // La respuesta no era JSON.
     }
 
     throw new Error(message);
@@ -460,7 +450,6 @@ export default function LecturaPage() {
         window.localStorage.setItem(SELECTED_READING_BOOK_KEY, id);
       }
     } catch {
-      // No bloquear si localStorage falla.
     }
   };
 
@@ -619,10 +608,6 @@ export default function LecturaPage() {
       setAnnotationPage(finalPage);
       setAnnotationChapter(finalChapter);
 
-      /*
-        Refrescamos la biblioteca para que al volver a seleccionar el libro,
-        o al ir a Biblioteca/Estadísticas, ya venga con el currentPage/currentChapter actualizado.
-      */
       try {
         const refreshedLibraryPage = await api.library.getAll({ page: 0, size: 100 });
         const refreshedLibs: LibraryItem[] = Array.isArray(refreshedLibraryPage)
@@ -651,7 +636,6 @@ export default function LecturaPage() {
         setCurrentStreak(Number(streak.currentStreak ?? 0));
         setMaxStreak(Number(streak.maxStreak ?? 0));
       } catch {
-        // No bloqueamos el guardado si falla la racha.
       }
 
       await Swal.fire({

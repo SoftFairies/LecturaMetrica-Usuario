@@ -15,15 +15,14 @@ import {
 import Swal from "sweetalert2";
 import { api, BookResponse } from "@/data/api";
 
-/* ──────────────── Types ──────────────── */
 interface Book {
-  id: string; // id de la entrada de biblioteca
-  bookId?: string; // id del libro global
+  id: string; 
+  bookId?: string; 
   title: string;
   author: string;
   cover?: string;
-  status: string; // readingStatusName
-  format?: string; // formatName
+  status: string; 
+  format?: string; 
   formatId?: number;
   genre?: string;
   totalPages?: number;
@@ -33,13 +32,21 @@ interface Book {
   isFavorite?: boolean;
 }
 
+interface BookNote {
+  id: string;
+  page?: number;
+  chapter?: number;
+  content: string;
+  createdAt?: string;
+}
+
+
 interface CatalogItem {
   id: number;
   name: string;
   description?: string;
 }
 
-/* ──────────────── Data ──────────────── */
 const FACTS = [
   {
     text: "El libro mas largo del mundo, 'A la recherche du temps perdu' de Proust, tiene 1.5 millones de palabras.",
@@ -107,13 +114,36 @@ const statusClass = (status: string) =>
 const statusIdFromName = (statuses: CatalogItem[], name: string) =>
   statuses.find((s) => s.name.toLowerCase() === name.toLowerCase())?.id || 1;
 
-/** true si `cover` es una URL real (viene de la búsqueda con API externa) */
 const isImageCover = (cover?: string) => !!cover && /^https?:\/\//i.test(cover);
 
-/** color de fondo cuando el libro NO tiene una portada-imagen real */
 const coverGradient = (cover?: string, index = 0) => {
   if (cover && cover.startsWith("#")) return "linear-gradient(160deg," + cover + ",#111827)";
   return COVER_COLORS[index % COVER_COLORS.length];
+};
+
+
+const normalizeBookNote = (note: any): BookNote => {
+  const page = Number(note?.page);
+  const chapter = Number(note?.chapter);
+
+  return {
+    id: String(note?.id ?? crypto.randomUUID?.() ?? Date.now()),
+    page: Number.isFinite(page) && page > 0 ? Math.trunc(page) : undefined,
+    chapter: Number.isFinite(chapter) && chapter > 0 ? Math.trunc(chapter) : undefined,
+    content: String(note?.content ?? note?.text ?? ""),
+    createdAt: String(note?.createdAt ?? note?.updatedAt ?? ""),
+  };
+};
+
+const isAnnotationNote = (note: BookNote) => Boolean(note.page && note.chapter);
+
+const formatNoteDate = (value?: string) => {
+  if (!value) return "";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+
+  return date.toLocaleDateString();
 };
 
 
@@ -144,7 +174,6 @@ const getBookChaptersFromResponse = (book: any): number | null => {
   return Number.isFinite(parsed) && parsed > 0 ? Math.trunc(parsed) : null;
 };
 
-/** Miniatura de portada: imagen real si el backend la dio, si no un bloque de color */
 function CoverThumb({
   cover,
   index = 0,
@@ -161,7 +190,6 @@ function CoverThumb({
   return <div className={className} style={{ background: coverGradient(cover, index) }} />;
 }
 
-/* ──────────────── RecommendedBookCard ──────────────── */
 function RecommendedBookCard({
   book,
   onAdd,
@@ -213,7 +241,6 @@ function RecommendedBookCard({
   );
 }
 
-/* ──────────────── BookCard ──────────────── */
 function BookCard({
   book,
   onClick,
@@ -299,7 +326,6 @@ function BookCard({
   );
 }
 
-/* ──────────────── AddBookModal ──────────────── */
 function AddBookModal({
   onClose,
   onAdded,
@@ -379,7 +405,6 @@ function AddBookModal({
     setError(null);
 
     try {
-      // Endpoint real de busqueda: cache local + API externa
       const results = await api.books.search(q);
       setSearchResults(Array.isArray(results) ? results.slice(0, 12) : []);
     } catch (err: any) {
@@ -438,8 +463,6 @@ function AddBookModal({
             ...baseLibraryPayload,
           } as any);
         } else {
-          // Si el resultado viene de la busqueda externa y no trae ID,
-          // no existe aun en el catalogo. Entonces se crea con newBook.
           await api.library.add({
             newBook: {
               title: selectedBook.title || title.trim(),
@@ -864,7 +887,6 @@ function AddBookModal({
   );
 }
 
-/* ──────────────── EditBookModal ──────────────── */
 function EditBookModal({
   book,
   onClose,
@@ -1131,8 +1153,43 @@ function EditBookModal({
   );
 }
 
-/* ──────────────── BookDetailModal ──────────────── */
 function BookDetailModal({ book, onClose }: { book: Book; onClose: () => void }) {
+  const [notes, setNotes] = useState<BookNote[]>([]);
+  const [loadingNotes, setLoadingNotes] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadNotes = async () => {
+      try {
+        setLoadingNotes(true);
+
+        const response = await api.library.getNotes(book.id);
+        if (!active) return;
+
+        const normalized = Array.isArray(response)
+          ? response.map(normalizeBookNote).filter((note) => note.content.trim())
+          : [];
+
+        setNotes(normalized);
+      } catch (error) {
+        console.warn("No se pudieron cargar notas/acotaciones del libro:", error);
+        if (active) setNotes([]);
+      } finally {
+        if (active) setLoadingNotes(false);
+      }
+    };
+
+    void loadNotes();
+
+    return () => {
+      active = false;
+    };
+  }, [book.id]);
+
+  const annotations = notes.filter(isAnnotationNote);
+  const generalNotes = notes.filter((note) => !isAnnotationNote(note));
+
   return (
     <div
       className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 px-4"
@@ -1199,13 +1256,85 @@ function BookDetailModal({ book, onClose }: { book: Book; onClose: () => void })
           </div>
 
           <div className="mt-4 bg-[#1A2332] rounded-xl p-3.5 border border-[#2E3D52]">
-            <div className="text-[9px] font-bold text-slate-600 uppercase tracking-widest mb-2">
-              Notas de sesión
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <div>
+                <div className="text-[9px] font-bold text-slate-600 uppercase tracking-widest">
+                  Notas y acotaciones
+                </div>
+                <p className="text-[10px] text-slate-500 mt-0.5">
+                  Se cargan desde Sesión de lectura
+                </p>
+              </div>
+              <span className="text-[10px] text-amber-400 font-semibold">
+                {notes.length}
+              </span>
             </div>
-            <p className="text-xs text-slate-500 leading-relaxed">
-              Las acotaciones y notas personales se agregan desde Sesión de lectura. Aquí solo se
-              mostrará el resumen cuando esa información venga desde la sesión.
-            </p>
+
+            {loadingNotes ? (
+              <p className="text-xs text-slate-500">Cargando notas...</p>
+            ) : notes.length === 0 ? (
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Este libro todavía no tiene notas ni acotaciones guardadas.
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {annotations.length > 0 && (
+                  <div>
+                    <div className="text-[10px] font-bold text-amber-400 uppercase tracking-widest mb-2">
+                      Acotaciones
+                    </div>
+                    <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                      {annotations.map((note) => (
+                        <div
+                          key={note.id}
+                          className="rounded-xl bg-[#111827] border border-[#2E3D52] px-3 py-2.5"
+                        >
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <span className="text-[10px] text-amber-400 font-semibold">
+                              Pág. {note.page} · Cap. {note.chapter}
+                            </span>
+                            {formatNoteDate(note.createdAt) && (
+                              <span className="text-[9px] text-slate-600">
+                                {formatNoteDate(note.createdAt)}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-slate-300 leading-relaxed">{note.content}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {generalNotes.length > 0 && (
+                  <div>
+                    <div className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-2">
+                      Notas generales
+                    </div>
+                    <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                      {generalNotes.map((note) => (
+                        <div
+                          key={note.id}
+                          className="rounded-xl bg-[#111827] border border-[#2E3D52] px-3 py-2.5"
+                        >
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <span className="text-[10px] text-blue-400 font-semibold">
+                              Nota general
+                            </span>
+                            {formatNoteDate(note.createdAt) && (
+                              <span className="text-[9px] text-slate-600">
+                                {formatNoteDate(note.createdAt)}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-slate-300 leading-relaxed">{note.content}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <button
@@ -1220,7 +1349,6 @@ function BookDetailModal({ book, onClose }: { book: Book; onClose: () => void })
   );
 }
 
-/* ──────────────── Main Page ──────────────── */
 type FilterType = "Todos" | "Leyendo" | "Terminado" | "Pausado" | "Abandonado" | "Por Leer";
 
 export default function BibliotecaPage() {
@@ -1285,9 +1413,6 @@ export default function BibliotecaPage() {
       setRecommendations([]);
     }
   };
-
-  // Para poder agregar una recomendacion con un click, necesitamos un
-  // formatId y readingStatusId por defecto (ahora son obligatorios).
   const loadDefaults = async () => {
     try {
       const [formatPage, statusPage] = await Promise.all([

@@ -68,7 +68,6 @@ export default function ProfileModal({ onClose }: ProfileModalProps) {
         }
       }
     } catch {
-      // Se mantiene la meta por defecto.
     }
   }, []);
 
@@ -87,7 +86,6 @@ export default function ProfileModal({ onClose }: ProfileModalProps) {
           setAnnualGoal(backendGoal);
         }
       } catch {
-        // No bloquear el modal si falla el usuario.
       }
 
       try {
@@ -150,7 +148,6 @@ export default function ProfileModal({ onClose }: ProfileModalProps) {
           picsPage.content.map((p: any) => ({ id: p.id, url: p.url, name: p.name })),
         );
       } catch {
-        // No bloquear si falla el catálogo de fotos.
       }
 
       try {

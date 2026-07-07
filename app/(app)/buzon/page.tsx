@@ -16,8 +16,8 @@ import Swal from "sweetalert2";
 const LAST_SENT_KEY_PREFIX = "lecturametrica_last_mailbox_sent";
 
 interface BookLite {
-  id: string; // id del libro global, necesario para enviar la carta
-  libraryId: string; // id de la entrada en biblioteca
+  id: string; 
+  libraryId: string; 
   title: string;
   authorNames: string;
 }
@@ -171,8 +171,6 @@ export default function BuzonPage() {
       }
 
       try {
-        // La carta debe enviarse usando un libro que YA esté en tu biblioteca.
-        // api.library.getAll ahora devuelve Page<LibraryEntryResponse>, por eso usamos .content.
         const libraryResponse = await api.library.getAll({ page: 0, size: 100 });
         if (!active) return;
 
@@ -249,8 +247,6 @@ export default function BuzonPage() {
 
   const featuredLetter = receivedLetters[0] ?? null;
 
-  // Revisa en consola qué campos manda realmente la API del buzón.
-  // Esto ayuda a confirmar si llega como bookId, book_id, book.id, etc.
   if (featuredLetter) {
     console.log("Carta recibida completa:", featuredLetter);
   }
