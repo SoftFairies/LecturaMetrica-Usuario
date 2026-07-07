@@ -7,7 +7,12 @@ import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 export const metadata: Metadata = {
   title: "LecturaMetrica",
   description: "Tu plataforma de seguimiento literario",
-  manifest: "/manifest.json",
+  // No se declara `manifest` a mano: al existir app/manifest.json (archivo
+  // especial de Next.js), Next ya genera automáticamente el <link
+  // rel="manifest"> apuntando a la URL real que él mismo sirve
+  // (/manifest.webmanifest). Declararlo aquí como "/manifest.json" apuntaba
+  // a una ruta que no existe -> 404 -> el navegador nunca tuvo un manifest
+  // válido, y por eso no había opción de "Instalar app".
 };
 
 export const viewport: Viewport = {
