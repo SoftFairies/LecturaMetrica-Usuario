@@ -5,7 +5,7 @@ const API_PREFIX = "/api/v1";
 export interface Page<T> {
   content: T[];
   totalElements: number;
-  totalPages: number;
+  totalPage: number;
   number: number;
   size: number;
   first: boolean;
@@ -17,7 +17,8 @@ export interface PageParams {
   page?: number;
   size?: number;
   sort?: string;
-  q?: string;
+  /** Búsqueda en /genders, /authors, /books (paginado) */
+  query?: string;
   [key: string]: string | number | boolean | undefined;
 }
 
@@ -66,7 +67,7 @@ function buildQuery<T extends object>(params?: T): string {
     if (value !== undefined && value !== null) usp.append(key, String(value));
   });
   const qs = usp.toString();
-  return qs ? `?${qs}` : "";
+  return qs ? "?" + qs : "";
 }
 
 interface RequestOptions {
@@ -80,14 +81,14 @@ interface RequestOptions {
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { method = "GET", body, formData, query, auth = true } = options;
 
-  const url = `${API_BASE_URL}${API_PREFIX}${path}${buildQuery(query)}`;
+  const url = API_BASE_URL + API_PREFIX + path + buildQuery(query);
 
   const headers: Record<string, string> = {};
   if (!formData) headers["Content-Type"] = "application/json";
 
   if (auth) {
     const token = tokenStorage.get();
-    if (token) headers["Authorization"] = `Bearer ${token}`;
+    if (token) headers["Authorization"] = "Bearer " + token;
   }
 
   const response = await fetch(url, {
@@ -152,6 +153,7 @@ export interface UpdateUserRequest {
   email?: string;
   password?: string;
   pictureId?: number;
+  annualGoal?: string;
 }
 
 export interface UserResponse {
@@ -162,7 +164,6 @@ export interface UserResponse {
   roleName: string;
   pictureId?: number;
   pictureUrl?: string;
-  profilePicture?: PictureResponse | null;
   active: boolean;
 }
 
@@ -235,83 +236,115 @@ export interface CatalogMultipartUpdate {
 
 // ---------------------------------------------------------------------------
 // Books
+// El libro YA NO tiene páginas ni formato propio. Autores/géneros se mandan
+// como "entidad" (EntityReferenceRequest): si ya existe, manda su id; si es
+// nuevo, manda solo el name y el backend lo crea sobre la marcha.
 // ---------------------------------------------------------------------------
 
-export interface BookRequest {
+export interface EntityReferenceRequest {
+  /** Si el autor/género ya existe en catálogo */
+  id?: number;
+  /** Si es nuevo (el backend lo crea) */
+  name?: string;
+}
+
+/** POST /api/v1/books — alta manual de un libro en el catálogo global */
+export interface CreateBookRequest {
   isbn?: string;
   title: string;
-  defaultChapters?: number;
-  defaultPages?: number;
-  origin: string;
-  coverType: string;
-  coverValue: string;
-  formatId: number;
-  authorIds?: number[];
-  genreIds?: number[];
+  authors?: EntityReferenceRequest[];
+  genres?: EntityReferenceRequest[];
+  cover?: string;
 }
 
 export interface BookResponse {
   id: string; // UUID
   isbn?: string;
   title: string;
-  defaultChapters?: number;
-  defaultPages?: number;
-  origin?: string;
-  coverType?: string;
-  coverValue?: string;
-  format: FormatResponse;
   authors: AuthorResponse[];
   genres: GenderResponse[];
+  cover?: string;
 }
 
 // ---------------------------------------------------------------------------
 // Library (librería personal del usuario autenticado)
+// Ahora pagina, y formatId/readingStatusId son obligatorios al agregar un
+// libro a tu biblioteca (antes vivían en el libro).
 // ---------------------------------------------------------------------------
 
-export interface LibraryEnrollmentRequest {
-  /** Para agregar un libro que YA existe en el catálogo (/books). */
+export interface AddLibraryEntryRequest {
+  /** UUID de un libro que YA existe en el catálogo (/books) */
   bookId?: string;
-  /** Para dar de alta un libro nuevo al mismo tiempo que se enrola. */
-  bookData?: BookRequest;
-  readingStatusId?: number;
+  /** Para dar de alta un libro nuevo al mismo tiempo que se agrega */
+  newBook?: CreateBookRequest;
+  /** OBLIGATORIO */
+  readingStatusId: number;
+  /** OBLIGATORIO — antes vivía en el libro, ahora es de tu entrada personal */
+  formatId: number;
+  currentChapter?: number;
   currentPage?: number;
+  isFavorite?: boolean;
 }
 
-export interface BookCustomizationRequest {
-  customTitle?: string;
-  customChapters?: number;
-  customPages?: number;
-  customCoverType?: string;
-  customCoverValue?: string;
-}
-
-export interface LibraryProgressRequest {
+export interface UpdateLibraryEntryRequest {
   readingStatusId?: number;
   currentChapter?: number;
   currentPage?: number;
   isFavorite?: boolean;
 }
 
-export interface UserLibrary {
+export interface LibraryEntryResponse {
   id: string; // UUID
-  user: UserResponse;
   book: BookResponse;
-  readingStatus: ReadingStatusResponse;
+  readingStatusName: string;
+  formatName: string;
   currentChapter?: number;
   currentPage?: number;
-  /** En la respuesta el campo se llama "favorite", no "isFavorite". */
-  favorite?: boolean;
+  isFavorite?: boolean;
 }
 
-export interface UserBookCustomization {
-  id: string; // UUID
-  user: UserResponse;
-  book: BookResponse;
-  customTitle?: string;
-  customChapters?: number;
-  customPages?: number;
-  customCoverType?: string;
-  customCoverValue?: string;
+/** POST/GET /api/v1/library/{libraryId}/notes — notas reales del backend */
+export interface LibraryNoteRequest {
+  content: string;
+  chapter?: number;
+  page?: number;
+}
+
+export interface LibraryNoteResponse {
+  id: number;
+  content: string;
+  chapter?: number;
+  page?: number;
+  bookTitle: string;
+  createdAt: string;
+}
+
+// ---------------------------------------------------------------------------
+// Reading Sessions (registro de sesiones de lectura)
+// ---------------------------------------------------------------------------
+
+export interface ReadingSessionRequest {
+  /** UUID de la entrada de biblioteca (LibraryEntryResponse.id) */
+  libraryId: string;
+  /** Fecha de la sesión, formato "YYYY-MM-DD" */
+  date: string;
+  secondsRead?: number;
+  pagesRead?: number;
+  chaptersRead?: number;
+}
+
+/**
+ * ⚠️ El Swagger que revisamos no mostraba el schema de respuesta (solo el
+ * request body de ejemplo). Esta forma es una suposición razonable — si el
+ * backend regresa algo distinto, avísame y la ajusto.
+ */
+export interface ReadingSessionResponse {
+  id: string;
+  libraryId: string;
+  date: string;
+  secondsRead?: number;
+  pagesRead?: number;
+  chaptersRead?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -335,17 +368,16 @@ export interface RecommendationResponse {
   genres: PreferenceItem[];
 }
 
-
 // ---------------------------------------------------------------------------
 // Mailbox (cartas anónimas)
 // ---------------------------------------------------------------------------
 
-export interface MailboxSendRequest {
+export interface SendLetterRequest {
   bookId: string;
   content: string;
 }
 
-export interface MailboxLetterResponse {
+export interface LetterResponse {
   id: number;
   bookId: string;
   senderId: string;
@@ -355,38 +387,99 @@ export interface MailboxLetterResponse {
 }
 
 // ---------------------------------------------------------------------------
+// Gamification (insignias obtenidas por el usuario)
+// ---------------------------------------------------------------------------
+
+export interface UserBadgeResponse {
+  badgeId: number;
+  name: string;
+  description?: string;
+  url: string;
+  earnedAt: string;
+}
+
+// ---------------------------------------------------------------------------
+// Streaks (racha de actividad)
+// ---------------------------------------------------------------------------
+
+export interface UserStreakResponse {
+  id: string;
+  currentStreak: number;
+  maxStreak: number;
+  lastActivityDate: string;
+}
+
+
+// ---------------------------------------------------------------------------
+// Reports / Dashboard
+// ---------------------------------------------------------------------------
+
+export interface WeeklyReadingMinuteResponse {
+  day: string;
+  minutes: number;
+}
+
+export interface MonthlyPagesReadResponse {
+  day: number;
+  pages: number;
+}
+
+export interface LibraryDistributionResponse {
+  completed: number;
+  inProgress: number;
+  toRead: number;
+}
+
+export interface AnnualProgressResponse {
+  month: string;
+  books: number;
+}
+
+export interface DashboardReportResponse {
+  estimatedMinutesTotal: number;
+  completedBooks: number;
+  annualGoal: number;
+  currentStreak: number;
+  pagesPerDayAvg: number;
+  weeklyReadingMinutes: WeeklyReadingMinuteResponse[];
+  monthlyPagesRead: MonthlyPagesReadResponse[];
+  libraryDistribution: LibraryDistributionResponse;
+  annualProgress: AnnualProgressResponse[];
+}
+
+// ---------------------------------------------------------------------------
 // Factories CRUD
 // ---------------------------------------------------------------------------
 
 function crudPlain<T>(basePath: string) {
   return {
     getAll: (params?: PageParams) => request<Page<T>>(basePath, { query: params }),
-    getById: (id: number) => request<T>(`${basePath}/${id}`),
+    getById: (id: number) => request<T>(basePath + "/" + id),
     create: (data: CatalogPlainRequest) =>
       request<T>(basePath, { method: "POST", body: data }),
     update: (id: number, data: UpdateCatalogPlainRequest) =>
-      request<T>(`${basePath}/${id}`, { method: "PUT", body: data }),
-    remove: (id: number) => request<void>(`${basePath}/${id}`, { method: "DELETE" }),
+      request<T>(basePath + "/" + id, { method: "PUT", body: data }),
+    remove: (id: number) => request<void>(basePath + "/" + id, { method: "DELETE" }),
   };
 }
 
 function crudMultipart<T>(basePath: string) {
   return {
     getAll: (params?: PageParams) => request<Page<T>>(basePath, { query: params }),
-    getById: (id: number) => request<T>(`${basePath}/${id}`),
+    getById: (id: number) => request<T>(basePath + "/" + id),
     /** Requiere rol ADMIN en el backend */
     create: (data: CatalogMultipartCreate) =>
       request<T>(basePath, { method: "POST", formData: toFormData(data) }),
     /** Requiere rol ADMIN en el backend */
     update: (id: number, data: CatalogMultipartUpdate) =>
-      request<T>(`${basePath}/${id}`, { method: "PUT", formData: toFormData(data) }),
+      request<T>(basePath + "/" + id, { method: "PUT", formData: toFormData(data) }),
     /** Requiere rol ADMIN en el backend */
-    remove: (id: number) => request<void>(`${basePath}/${id}`, { method: "DELETE" }),
+    remove: (id: number) => request<void>(basePath + "/" + id, { method: "DELETE" }),
   };
 }
 
 // ---------------------------------------------------------------------------
-// API
+// API — verificado contra el OpenAPI completo más reciente
 // ---------------------------------------------------------------------------
 
 export const api = {
@@ -402,7 +495,7 @@ export const api = {
   users: {
     /** GET /api/v1/users/me */
     getMe: () => request<UserResponse>("/users/me"),
-    /** PUT /api/v1/users/me */
+    /** PUT /api/v1/users/me (ahora acepta annualGoal) */
     updateMe: (data: UpdateUserRequest) =>
       request<UserResponse>("/users/me", { method: "PUT", body: data }),
     /** DELETE /api/v1/users/me */
@@ -410,26 +503,30 @@ export const api = {
     /** GET /api/v1/users — ADMIN */
     getAll: (params?: PageParams) => request<Page<UserResponse>>("/users", { query: params }),
     /** GET /api/v1/users/{id} — ADMIN */
-    getById: (id: string) => request<UserResponse>(`/users/${id}`),
+    getById: (id: string) => request<UserResponse>("/users/" + id),
+    /** PUT /api/v1/users/{id} — ADMIN */
+    update: (id: string, data: UpdateUserRequest) =>
+      request<UserResponse>("/users/" + id, { method: "PUT", body: data }),
     /** POST /api/v1/users — ADMIN */
     create: (data: RegisterRequest) =>
       request<AuthResponse>("/users", { method: "POST", body: data }),
   },
 
-  /** /api/v1/authors */
+  /** /api/v1/authors — ahora con búsqueda opcional vía ?query= */
   authors: crudPlain<AuthorResponse>("/authors"),
   /** /api/v1/formats */
   formats: crudPlain<FormatResponse>("/formats"),
-  /** /api/v1/genders */
+  /** /api/v1/genders — ahora con búsqueda opcional vía ?query= */
   genders: crudPlain<GenderResponse>("/genders"),
   /** /api/v1/reading-status */
   readingStatus: crudPlain<ReadingStatusResponse>("/reading-status"),
   /** /api/v1/badges (con imagen) */
   badges: crudMultipart<BadgeResponse>("/badges"),
+
   /** /api/v1/pictures (con imagen) */
   pictures: {
     getAll: (params?: PageParams) => request<Page<PictureResponse>>("/pictures", { query: params }),
-    getById: (id: number) => request<PictureResponse>(`/pictures/${id}`),
+    getById: (id: number) => request<PictureResponse>("/pictures/" + id),
     create: (data: CatalogMultipartCreate) =>
       request<PictureResponse>("/pictures", {
         method: "POST",
@@ -440,50 +537,78 @@ export const api = {
         }),
       }),
     update: (id: number, data: CatalogMultipartUpdate) =>
-      request<PictureResponse>(`/pictures/${id}`, {
+      request<PictureResponse>("/pictures/" + id, {
         method: "PUT",
         formData: toFormData(data),
       }),
-    remove: (id: number) => request<void>(`/pictures/${id}`, { method: "DELETE" }),
+    remove: (id: number) => request<void>("/pictures/" + id, { method: "DELETE" }),
+  },
+
+  /** GET /api/v1/gamification/me/badges — insignias REALMENTE obtenidas por el usuario */
+  gamification: {
+    getMyBadges: () => request<UserBadgeResponse[]>("/gamification/me/badges"),
+  },
+
+  /** GET /api/v1/streaks/me — racha de actividad real del usuario */
+  streaks: {
+    getMine: () => request<UserStreakResponse>("/streaks/me"),
+  },
+
+  /** /api/v1/reports */
+  reports: {
+    /** GET /api/v1/reports/dashboard */
+    getDashboard: () => request<DashboardReportResponse>("/reports/dashboard"),
   },
 
   /**
-   * ⚠️ No confirmado contra el Swagger que revisamos juntos (no aparecía en
-   * las 10 capturas). Si al probarlo te da 404, avísame la ruta real que
-   * veas en Swagger y la corrijo.
+   * /api/v1/books — id = UUID. El libro YA NO tiene páginas ni formato
+   * (eso ahora vive en la entrada de biblioteca, ver `library.add`).
    */
-  gamification: {
-    getMyBadges: () => request<BadgeResponse[]>("/gamification/me/badges"),
+  books: {
+    /** GET /api/v1/books — soporta ?query= para buscar en el catálogo ya cacheado */
+    getAll: (params?: PageParams) => request<Page<BookResponse>>("/books", { query: params }),
+    getById: (id: string) => request<BookResponse>("/books/" + id),
+    /** GET /api/v1/books/search?q=... — búsqueda con caché local + API externa (Google Books, etc.) */
+    search: (q: string) => request<BookResponse[]>("/books/search", { query: { q } }),
+    /** POST /api/v1/books — 201 Created */
+    create: (data: CreateBookRequest) =>
+      request<BookResponse>("/books", { method: "POST", body: data }),
+    remove: (id: string) => request<void>("/books/" + id, { method: "DELETE" }),
   },
-
-  /** /api/v1/books — id = UUID */
-books: {
-  getAll: (params?: PageParams) => request<Page<BookResponse>>("/books", { query: params }),
-  getById: (id: string) => request<BookResponse>(`/books/${id}`),
-  create: (data: BookRequest) => request<BookResponse>("/books", { method: "POST", body: data }),
-  update: (id: string, data: BookRequest) =>
-    request<BookResponse>(`/books/${id}`, { method: "PUT", body: data }),
-  remove: (id: string) => request<void>(`/books/${id}`, { method: "DELETE" }),
-},
 
   /** /api/v1/library — biblioteca personal del usuario autenticado (ids = UUID) */
   library: {
-    /** GET /api/v1/library — devuelve un array plano, no paginado */
-    getAll: (params?: PageParams) => request<UserLibrary[]>("/library", { query: params }),
-    /** POST /api/v1/library */
-    add: (data: LibraryEnrollmentRequest) =>
+    /** GET /api/v1/library — pagina (Page<LibraryEntryResponse>) */
+    getAll: (params?: PageParams) =>
+      request<Page<LibraryEntryResponse>>("/library", { query: params }),
+    /** POST /api/v1/library — formatId y readingStatusId son OBLIGATORIOS */
+    add: (data: AddLibraryEntryRequest) =>
       request<void>("/library", { method: "POST", body: data }),
-    /** POST /api/v1/library/{id}/customization */
-    customize: (id: string, data: BookCustomizationRequest) =>
-      request<UserBookCustomization>(`/library/${id}/customization`, {
+    /** PATCH /api/v1/library/{id} — progreso / estado / favorito */
+    updateProgress: (id: string, data: UpdateLibraryEntryRequest) =>
+      request<void>("/library/" + id, { method: "PATCH", body: data }),
+    /** DELETE /api/v1/library/{id} */
+    remove: (id: string) => request<void>("/library/" + id, { method: "DELETE" }),
+    /** GET /api/v1/library/{libraryId}/notes */
+    getNotes: (libraryId: string) =>
+      request<LibraryNoteResponse[]>("/library/" + libraryId + "/notes"),
+    /** POST /api/v1/library/{libraryId}/notes */
+    addNote: (libraryId: string, data: LibraryNoteRequest) =>
+      request<LibraryNoteResponse>("/library/" + libraryId + "/notes", {
         method: "POST",
         body: data,
       }),
-    /** PATCH /api/v1/library/{id} */
-    updateProgress: (id: string, data: LibraryProgressRequest) =>
-      request<void>(`/library/${id}`, { method: "PATCH", body: data }),
-    /** DELETE /api/v1/library/{id} */
-    remove: (id: string) => request<void>(`/library/${id}`, { method: "DELETE" }),
+  },
+
+  /**
+   * /api/v1/reading-sessions — registra una sesión de lectura (tiempo,
+   * páginas y capítulos leídos en una fecha dada) para una entrada de
+   * biblioteca (`libraryId`).
+   */
+  readingSessions: {
+    /** POST /api/v1/reading-sessions */
+    create: (data: ReadingSessionRequest) =>
+      request<ReadingSessionResponse>("/reading-sessions", { method: "POST", body: data }),
   },
 
   /** /api/v1/preferences — preferencias de lectura del usuario autenticado */
@@ -502,15 +627,12 @@ books: {
 
   /** /api/v1/mailbox */
   mailbox: {
-  send: (data: { bookId: string; content: string }) =>
-    request<void>("/mailbox/send", {
-      method: "POST",
-      body: data,
-    }),
-
-  getReceived: () =>
-    request<any[]>("/mailbox/received"),
-},
+    /** POST /api/v1/mailbox/send */
+    send: (data: SendLetterRequest) =>
+      request<void>("/mailbox/send", { method: "POST", body: data }),
+    /** GET /api/v1/mailbox/received */
+    getReceived: () => request<LetterResponse[]>("/mailbox/received"),
+  },
 };
 
 export default api;

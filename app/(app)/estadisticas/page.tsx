@@ -1,9 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip,
-  ResponsiveContainer, PieChart, Pie, Cell, Legend, LabelList,
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+  LabelList,
   CartesianGrid,
 } from "recharts";
 import { api } from "@/data/api";
@@ -14,9 +25,29 @@ const STATUS_COLORS: Record<string, string> = {
   "Por leer": "#2E3D52",
 };
 
+const DEFAULT_WEEKLY = [
+  { day: "Lun", min: 0 },
+  { day: "Mar", min: 0 },
+  { day: "Mié", min: 0 },
+  { day: "Jue", min: 0 },
+  { day: "Vie", min: 0 },
+  { day: "Sáb", min: 0 },
+  { day: "Dom", min: 0 },
+];
+
 const DEFAULT_MONTHLY = [
-  "Ene", "Feb", "Mar", "Abr", "May", "Jun",
-  "Jul", "Ago", "Sep", "Oct", "Nov", "Dic",
+  "Ene",
+  "Feb",
+  "Mar",
+  "Abr",
+  "May",
+  "Jun",
+  "Jul",
+  "Ago",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dic",
 ].map((month) => ({ month, books: 0 }));
 
 const TOOLTIP_STYLE = {
@@ -31,14 +62,127 @@ const TOOLTIP_STYLE = {
   labelStyle: { color: "#CBD5E1" },
 };
 
+type DashboardReport = {
+  estimatedMinutesTotal?: number;
+  completedBooks?: number;
+  annualGoal?: number;
+  currentStreak?: number;
+  pagesPerDayAvg?: number;
+  weeklyReadingMinutes?: Array<{
+    day?: string;
+    minutes?: number;
+  }>;
+  monthlyPagesRead?: Array<{
+    day?: number;
+    pages?: number;
+  }>;
+  libraryDistribution?: {
+    completed?: number;
+    inProgress?: number;
+    toRead?: number;
+  };
+  annualProgress?: Array<{
+    month?: string;
+    books?: number;
+  }>;
+};
+
+function safeNumber(value: unknown, fallback = 0) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function currentMonthDays() {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+}
+
+function getStreakStyle(days: number) {
+  if (days >= 15) {
+    return {
+      label: "Racha legendaria",
+      icon: "💙",
+      color: "text-blue-400",
+      bg: "bg-blue-500/10 border-blue-500/20",
+    };
+  }
+
+  if (days >= 7) {
+    return {
+      label: "Racha fuerte",
+      icon: "💗",
+      color: "text-pink-400",
+      bg: "bg-pink-500/10 border-pink-500/20",
+    };
+  }
+
+  if (days >= 3) {
+    return {
+      label: "Racha activa",
+      icon: "🔥",
+      color: "text-orange-400",
+      bg: "bg-orange-500/10 border-orange-500/20",
+    };
+  }
+
+  return {
+    label: "Racha en proceso",
+    icon: "○",
+    color: "text-slate-500",
+    bg: "bg-slate-500/10 border-slate-500/20",
+  };
+}
+
+function normalizeWeeklyMinutes(items?: DashboardReport["weeklyReadingMinutes"]) {
+  const values = new Map<string, number>();
+
+  (items ?? []).forEach((item) => {
+    if (!item?.day) return;
+    values.set(item.day, safeNumber(item.minutes, 0));
+  });
+
+  return DEFAULT_WEEKLY.map(({ day }) => ({
+    day,
+    min: values.get(day) ?? 0,
+  }));
+}
+
+function normalizeMonthlyPages(items?: DashboardReport["monthlyPagesRead"]) {
+  const daysInMonth = currentMonthDays();
+  const values = Array.from({ length: daysInMonth }, (_, i) => ({
+    day: i + 1,
+    pages: 0,
+  }));
+
+  (items ?? []).forEach((item) => {
+    const day = Math.trunc(safeNumber(item?.day, 0));
+    if (day < 1 || day > daysInMonth) return;
+
+    values[day - 1].pages = safeNumber(item?.pages, 0);
+  });
+
+  return values;
+}
+
+function normalizeAnnualProgress(items?: DashboardReport["annualProgress"]) {
+  const values = new Map<string, number>();
+
+  (items ?? []).forEach((item) => {
+    if (!item?.month) return;
+    values.set(item.month, safeNumber(item.books, 0));
+  });
+
+  return DEFAULT_MONTHLY.map(({ month }) => ({
+    month,
+    books: values.get(month) ?? 0,
+  }));
+}
+
 export default function EstadisticasPage() {
-  const [weeklyMinutes, setWeeklyMinutes] = useState([
-    { day: "Lun", min: 0 }, { day: "Mar", min: 0 }, { day: "Mié", min: 0 },
-    { day: "Jue", min: 0 }, { day: "Vie", min: 0 }, { day: "Sáb", min: 0 }, { day: "Dom", min: 0 },
-  ]);
+  const [weeklyMinutes, setWeeklyMinutes] = useState(DEFAULT_WEEKLY);
 
   const [dailyPages, setDailyPages] = useState(
-    Array.from({ length: 30 }, (_, i) => ({ day: i + 1, pages: 0 }))
+    Array.from({ length: currentMonthDays() }, (_, i) => ({ day: i + 1, pages: 0 })),
   );
 
   const [monthlyGoal, setMonthlyGoal] = useState(DEFAULT_MONTHLY);
@@ -53,76 +197,58 @@ export default function EstadisticasPage() {
   const [completedBooks, setCompletedBooks] = useState(0);
   const [dailyAvgPages, setDailyAvgPages] = useState(0);
   const [currentStreak, setCurrentStreak] = useState(0);
+  const [maxStreak, setMaxStreak] = useState(0);
 
-  const goalBooks = 24;
+  const [goalBooks, setGoalBooks] = useState(0);
   const [goalProgress, setGoalProgress] = useState(0);
+
+  const streakStyle = useMemo(() => getStreakStyle(currentStreak), [currentStreak]);
 
   useEffect(() => {
     let active = true;
 
     const load = async () => {
       try {
-        const libs = await api.library.getAll();
+        const dashboard = (await api.reports.getDashboard()) as DashboardReport;
         if (!active) return;
 
-        const safeLibs = Array.isArray(libs) ? libs : [];
+        const completed = safeNumber(dashboard.completedBooks, 0);
+        const annualGoal = safeNumber(dashboard.annualGoal, 0);
+        const current = safeNumber(dashboard.currentStreak, 0);
 
-        const completed = safeLibs.filter(
-          (l: any) => l.readingStatus?.name?.toLowerCase() === "completado"
-        ).length;
-
-        const inProgress = safeLibs.filter(
-          (l: any) =>
-            l.readingStatus?.name?.toLowerCase() === "leyendo" ||
-            l.readingStatus?.name?.toLowerCase() === "en progreso"
-        ).length;
-
-        const pending = Math.max(0, safeLibs.length - completed - inProgress);
-
-        const totalPages = safeLibs.reduce(
-          (acc: number, l: any) => acc + Number(l.currentPage ?? 0),
-          0
-        );
-
-        const estimatedMinutes = Math.round(totalPages * 2);
+        setWeeklyMinutes(normalizeWeeklyMinutes(dashboard.weeklyReadingMinutes));
+        setDailyPages(normalizeMonthlyPages(dashboard.monthlyPagesRead));
+        setMonthlyGoal(normalizeAnnualProgress(dashboard.annualProgress));
 
         setDistrib([
-          { name: "Completados", value: completed, color: STATUS_COLORS.Completados },
-          { name: "En progreso", value: inProgress, color: STATUS_COLORS["En progreso"] },
-          { name: "Por leer", value: pending, color: STATUS_COLORS["Por leer"] },
+          {
+            name: "Completados",
+            value: safeNumber(dashboard.libraryDistribution?.completed, 0),
+            color: STATUS_COLORS.Completados,
+          },
+          {
+            name: "En progreso",
+            value: safeNumber(dashboard.libraryDistribution?.inProgress, 0),
+            color: STATUS_COLORS["En progreso"],
+          },
+          {
+            name: "Por leer",
+            value: safeNumber(dashboard.libraryDistribution?.toRead, 0),
+            color: STATUS_COLORS["Por leer"],
+          },
         ]);
 
+        setTotalMin(safeNumber(dashboard.estimatedMinutesTotal, 0));
         setCompletedBooks(completed);
-        setTotalMin(estimatedMinutes);
-        setDailyAvgPages(Math.round(totalPages / 7));
-        setGoalProgress(Math.min(100, Math.round((completed / goalBooks) * 100)));
-
-        setWeeklyMinutes([
-          { day: "Lun", min: Math.round(estimatedMinutes * 0.12) },
-          { day: "Mar", min: Math.round(estimatedMinutes * 0.16) },
-          { day: "Mié", min: Math.round(estimatedMinutes * 0.14) },
-          { day: "Jue", min: Math.round(estimatedMinutes * 0.18) },
-          { day: "Vie", min: Math.round(estimatedMinutes * 0.15) },
-          { day: "Sáb", min: Math.round(estimatedMinutes * 0.13) },
-          { day: "Dom", min: Math.round(estimatedMinutes * 0.12) },
-        ]);
-
-        setDailyPages(
-          Array.from({ length: 30 }, (_, i) => ({
-            day: i + 1,
-            pages: Math.round(totalPages / 30),
-          }))
+        setDailyAvgPages(safeNumber(dashboard.pagesPerDayAvg, 0));
+        setCurrentStreak(current);
+        setMaxStreak(current);
+        setGoalBooks(annualGoal);
+        setGoalProgress(
+          annualGoal > 0 ? Math.min(100, Math.round((completed / annualGoal) * 100)) : 0,
         );
-
-        const nextMonthly = DEFAULT_MONTHLY.map((m, index) => ({
-          ...m,
-          books: index < completed ? 1 : 0,
-        }));
-
-        setMonthlyGoal(nextMonthly);
-        setCurrentStreak(totalPages > 0 ? 7 : 0);
       } catch (error) {
-        console.error("Error cargando estadísticas:", error);
+        console.error("Error cargando dashboard de estadísticas:", error);
       }
     };
 
@@ -139,15 +265,41 @@ export default function EstadisticasPage() {
         <h1 className="text-2xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>
           Estadísticas
         </h1>
-        <p className="text-slate-500 text-sm mt-0.5">Tu progreso lector</p>
+        <p className="text-slate-500 text-sm mt-0.5">
+          Tu progreso lector actualizado desde el dashboard de la API
+        </p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
         {[
-          { val: `${totalMin}`, label: "Minutos estimados", icon: "⏱", color: "text-amber-400", bg: "bg-amber-500/10 border-amber-500/20" },
-          { val: `${completedBooks} / ${goalBooks}`, label: "Libros completados", icon: "☑", color: "text-blue-400", bg: "bg-blue-500/10 border-blue-500/20" },
-          { val: `${currentStreak} días`, label: "Racha actual", icon: "🔥", color: "text-pink-400", bg: "bg-pink-500/10 border-pink-500/20" },
-          { val: `${dailyAvgPages}`, label: "Páginas / día", icon: "↗", color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20" },
+          {
+            val: `${totalMin}`,
+            label: "Minutos registrados",
+            icon: "⏱",
+            color: "text-amber-400",
+            bg: "bg-amber-500/10 border-amber-500/20",
+          },
+          {
+            val: `${completedBooks} / ${goalBooks}`,
+            label: "Libros completados",
+            icon: "☑",
+            color: "text-blue-400",
+            bg: "bg-blue-500/10 border-blue-500/20",
+          },
+          {
+            val: `${currentStreak} día${currentStreak === 1 ? "" : "s"}`,
+            label: `${streakStyle.label} · récord ${maxStreak}`,
+            icon: streakStyle.icon,
+            color: streakStyle.color,
+            bg: streakStyle.bg,
+          },
+          {
+            val: `${dailyAvgPages}`,
+            label: "Páginas / día",
+            icon: "↗",
+            color: "text-emerald-400",
+            bg: "bg-emerald-500/10 border-emerald-500/20",
+          },
         ].map(({ val, label, icon, color, bg }) => (
           <div key={label} className={`bg-[#111827] border ${bg} rounded-2xl p-4`}>
             <div className={`text-base mb-1.5 ${color}`}>{icon}</div>
@@ -160,7 +312,7 @@ export default function EstadisticasPage() {
       <div className="grid md:grid-cols-2 gap-4 mb-4">
         <div className="bg-[#111827] border border-[#1A2332] rounded-2xl p-5">
           <h3 className="font-semibold text-white text-sm">Tiempo de lectura semanal</h3>
-          <p className="text-[10px] text-slate-500 mb-4">Minutos estimados por día</p>
+          <p className="text-[10px] text-slate-500 mb-4">Minutos devueltos por /reports/dashboard</p>
 
           <ResponsiveContainer width="100%" height={190}>
             <BarChart data={weeklyMinutes} barSize={22}>
@@ -177,8 +329,8 @@ export default function EstadisticasPage() {
         </div>
 
         <div className="bg-[#111827] border border-[#1A2332] rounded-2xl p-5">
-          <h3 className="font-semibold text-white text-sm">Páginas leídas por día</h3>
-          <p className="text-[10px] text-slate-500 mb-4">Estimado según tu progreso actual</p>
+          <h3 className="font-semibold text-white text-sm">Páginas registradas por día</h3>
+          <p className="text-[10px] text-slate-500 mb-4">Páginas devueltas por /reports/dashboard</p>
 
           <ResponsiveContainer width="100%" height={190}>
             <LineChart data={dailyPages}>
@@ -195,7 +347,10 @@ export default function EstadisticasPage() {
 
       <div className="grid md:grid-cols-2 gap-4">
         <div className="bg-[#111827] border border-[#1A2332] rounded-2xl p-5">
-          <h3 className="font-semibold text-white text-sm mb-4">Distribución de biblioteca</h3>
+          <h3 className="font-semibold text-white text-sm mb-1">Distribución de biblioteca</h3>
+          <p className="text-[10px] text-slate-500 mb-4">
+            Datos reales enviados por /reports/dashboard
+          </p>
 
           <div className="flex items-center gap-6">
             <PieChart width={160} height={160}>
@@ -238,7 +393,7 @@ export default function EstadisticasPage() {
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-base font-bold text-white">{completedBooks} libros leídos</span>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-400">meta: {goalBooks}</span>
+              <span className="text-xs text-slate-400">meta anual: {goalBooks > 0 ? goalBooks : "sin definir"}</span>
               <div className="w-10 h-10 rounded-full bg-amber-600/20 border-2 border-amber-600/40 flex items-center justify-center">
                 <span className="text-xs font-bold text-amber-400">{goalProgress}%</span>
               </div>
@@ -250,7 +405,9 @@ export default function EstadisticasPage() {
           </div>
 
           <p className="text-[10px] text-slate-500 mb-4">
-            {goalProgress}% completado · {Math.max(0, goalBooks - completedBooks)} libros restantes
+            {goalBooks > 0
+              ? `${goalProgress}% completado · ${Math.max(0, goalBooks - completedBooks)} libros restantes`
+              : "Meta anual no definida"}
           </p>
 
           <div className="grid grid-cols-6 gap-1.5">
