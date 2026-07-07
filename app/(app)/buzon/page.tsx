@@ -8,7 +8,6 @@ import {
   BookPlus,
   Inbox,
 } from "lucide-react";
-import ProfileModal from "@/components/ProfileModal";
 import { useTheme } from "@/components/ThemeProvider";
 import { api } from "@/data/api";
 import Swal from "sweetalert2";
@@ -89,7 +88,6 @@ export default function BuzonPage() {
   const { theme } = useTheme();
   const isDark = theme === "dark";
 
-  const [showProfile, setShowProfile] = useState(false);
   const [opened, setOpened] = useState(true);
   const [liked, setLiked] = useState<boolean | null>(null);
 
@@ -218,7 +216,17 @@ export default function BuzonPage() {
         const received = await api.mailbox.getReceived();
         if (!active) return;
 
-        const sorted = [...(received || [])].sort((a, b) => {
+        const receivedList = Array.isArray(received)
+          ? received
+          : Array.isArray((received as any)?.content)
+            ? (received as any).content
+            : Array.isArray((received as any)?.letters)
+              ? (received as any).letters
+              : Array.isArray((received as any)?.data)
+                ? (received as any).data
+                : [];
+
+        const sorted = [...receivedList].sort((a, b) => {
           const da = a?.sentAt ? new Date(a.sentAt).getTime() : 0;
           const db = b?.sentAt ? new Date(b.sentAt).getTime() : 0;
           return db - da;
@@ -657,17 +665,6 @@ export default function BuzonPage() {
         </div>
       </div>
 
-      <div className="fixed bottom-20 md:bottom-6 right-5 md:right-6 z-30">
-        <button
-          type="button"
-          onClick={() => setShowProfile(true)}
-          className="w-11 h-11 rounded-full bg-gradient-to-br from-amber-500 to-amber-700 text-white font-bold shadow-lg shadow-amber-900/40 hover:scale-105 transition-transform"
-        >
-          M
-        </button>
-      </div>
-
-      {showProfile && <ProfileModal onClose={() => setShowProfile(false)} />}
     </div>
   );
 }

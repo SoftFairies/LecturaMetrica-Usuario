@@ -353,6 +353,8 @@ function AddBookModal({
   const [authors, setAuthors] = useState<CatalogItem[]>([]);
   const [authorSearch, setAuthorSearch] = useState("");
   const [selectedAuthor, setSelectedAuthor] = useState<CatalogItem | null>(null);
+  const [genreSearch, setGenreSearch] = useState("");
+  const [selectedGenre, setSelectedGenre] = useState<CatalogItem | null>(null);
 
   useEffect(() => {
     const loadCatalogs = async () => {
@@ -477,9 +479,13 @@ function AddBookModal({
                   ? selectedBook.genres.map((genre) =>
                       genre.id ? { id: genre.id } : { name: genre.name },
                     )
-                  : genreId
-                    ? [{ id: Number(genreId) }]
-                    : [],
+                  : selectedGenre
+                    ? [{ id: selectedGenre.id }]
+                    : genreSearch.trim()
+                      ? [{ name: genreSearch.trim() }]
+                      : genreId
+                        ? [{ id: Number(genreId) }]
+                        : [],
               cover: selectedBook.cover || SOLID_COLORS[selectedColor] || "#334155",
               totalPage: normalizedTotalPages,
               totalChapter: normalizedTotalChapters,
@@ -502,11 +508,19 @@ function AddBookModal({
             ? [{ name: authorSearch.trim() }]
             : [];
 
+        const genresPayload = selectedGenre
+          ? [{ id: selectedGenre.id }]
+          : genreSearch.trim()
+            ? [{ name: genreSearch.trim() }]
+            : genreId
+              ? [{ id: Number(genreId) }]
+              : [];
+
         await api.library.add({
           newBook: {
             title: title.trim(),
             authors: authorsPayload,
-            genres: genreId ? [{ id: Number(genreId) }] : [],
+            genres: genresPayload,
             cover: SOLID_COLORS[selectedColor] || "#334155",
             totalPage: normalizedTotalPages,
             totalChapter: normalizedTotalChapters,
@@ -706,6 +720,8 @@ function AddBookModal({
                     setTitle("");
                     setTotalPagesInput("");
                     setTotalChaptersInput("1");
+                    setSelectedGenre(null);
+                    setGenreSearch("");
                   }}
                   className="text-[10px] text-slate-500 hover:text-white"
                 >
@@ -845,22 +861,54 @@ function AddBookModal({
                   )}
                 </div>
 
-                <div>
+                <div className="relative">
                   <label className="text-[10px] text-slate-500 uppercase tracking-widest block mb-1.5">
-                    Genero
+                    Género
                   </label>
-                  <select
-                    value={genreId}
-                    onChange={(e) => setGenreId(e.target.value ? Number(e.target.value) : "")}
-                    className="w-full bg-[#1A2332] border border-[#2E3D52] rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:ring-1 focus:ring-amber-500/40"
-                  >
-                    <option value="">Selecciona (opcional)</option>
-                    {genres.map((g) => (
-                      <option key={g.id} value={g.id}>
-                        {g.name}
-                      </option>
-                    ))}
-                  </select>
+                  <input
+                    value={selectedGenre ? selectedGenre.name : genreSearch}
+                    onChange={(e) => {
+                      setGenreSearch(e.target.value);
+                      setSelectedGenre(null);
+                      setGenreId("");
+                    }}
+                    type="text"
+                    placeholder="Escribe el género (si no existe, se crea)"
+                    className="w-full bg-[#1A2332] border border-[#2E3D52] rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500/40 transition-all"
+                  />
+
+                  {!selectedGenre && genreSearch.trim().length > 0 && (
+                    <div className="absolute z-30 mt-1 w-full bg-[#111827] border border-[#2E3D52] rounded-xl max-h-48 overflow-y-auto shadow-xl">
+                      {genres
+                        .filter((g) => g.name.toLowerCase().indexOf(genreSearch.toLowerCase()) !== -1)
+                        .slice(0, 10)
+                        .map((g) => (
+                          <button
+                            type="button"
+                            key={g.id}
+                            onClick={() => {
+                              setSelectedGenre(g);
+                              setGenreSearch("");
+                              setGenreId(g.id);
+                            }}
+                            className="w-full text-left px-4 py-2.5 text-sm text-slate-300 hover:bg-[#1A2332] hover:text-white transition-colors"
+                          >
+                            {g.name}
+                          </button>
+                        ))}
+
+                      {genres.filter((g) => g.name.toLowerCase().indexOf(genreSearch.toLowerCase()) !== -1)
+                        .length === 0 && (
+                        <div className="px-4 py-2.5 text-sm text-amber-400">
+                          Crear nuevo género: {genreSearch.trim()}
+                        </div>
+                      )}
+
+                      <div className="px-4 py-2.5 text-[10px] text-slate-600 border-t border-[#1A2332]">
+                        Si no aparece en la lista, se creará un género nuevo con ese nombre.
+                      </div>
+                    </div>
+                  )}
                 </div>
               </>
             )}

@@ -12,7 +12,6 @@ import { api, tokenStorage, ApiError, UserResponse, LoginRequest, RegisterReques
 
 interface AuthContextValue {
   user: UserResponse | null;
-  /** true mientras se verifica el token guardado al cargar la app */
   loading: boolean;
   isAuthenticated: boolean;
   login: (data: LoginRequest) => Promise<void>;
@@ -37,7 +36,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const me = await api.users.getMe();
       setUser(me);
     } catch (err) {
-      // Token inválido o expirado
       tokenStorage.clear();
       setUser(null);
     }
@@ -45,6 +43,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     refreshUser().finally(() => setLoading(false));
+  }, []);
+  useEffect(() => {
+    const handleUnauthorized = () => setUser(null);
+    window.addEventListener("lecturametrica:unauthorized", handleUnauthorized);
+    return () => window.removeEventListener("lecturametrica:unauthorized", handleUnauthorized);
   }, []);
 
   const login = useCallback(async (data: LoginRequest) => {

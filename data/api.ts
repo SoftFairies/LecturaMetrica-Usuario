@@ -101,6 +101,17 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     return undefined as T;
   }
 
+  // Token vencido o inválido: pasa esto ANTES de intentar leer el body,
+  // porque un 401 puede no traer JSON. Se centraliza aquí porque request()
+  // es el único punto por el que pasan todas las peticiones -- así no hay
+  // que repetir esta lógica en cada página.
+  if (response.status === 401 && auth) {
+    tokenStorage.clear();
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("lecturametrica:unauthorized"));
+    }
+  }
+
   const isJson = response.headers.get("content-type")?.includes("application/json");
   const data = isJson ? await response.json().catch(() => null) : null;
 

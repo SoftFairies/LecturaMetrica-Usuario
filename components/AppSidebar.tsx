@@ -74,12 +74,34 @@ export default function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [userName, setUserName] = useState("Usuario");
+  const [profileImageUrl, setProfileImageUrl] = useState("");
   const [badges, setBadges] = useState<SidebarBadge[]>([]);
 
   const badgeCount = badges.length;
   const initials = useMemo(() => getInitials(userName), [userName]);
 
   const visibleBadges = badges.length > 0 ? badges : FALLBACK_BADGES;
+
+  const renderAvatar = (sizeClass: string, textClass: string, onlyFirstLetter = false) => {
+    if (profileImageUrl) {
+      return (
+        <img
+          src={profileImageUrl}
+          alt="Foto de perfil"
+          onError={() => setProfileImageUrl("")}
+          className={`${sizeClass} rounded-full object-cover border border-amber-600/40 flex-shrink-0`}
+        />
+      );
+    }
+
+    return (
+      <div
+        className={`${sizeClass} rounded-full bg-gradient-to-br from-amber-500 to-amber-700 flex items-center justify-center font-bold text-white flex-shrink-0 ${textClass}`}
+      >
+        {onlyFirstLetter ? initials.charAt(0) : initials}
+      </div>
+    );
+  };
 
   const handleLogout = () => {
     logout();
@@ -95,10 +117,18 @@ export default function AppSidebar() {
         if (!active) return;
 
         const fullName = `${user?.name ?? ""} ${user?.lastname ?? ""}`.trim();
+        const pictureUrl =
+          user?.pictureUrl ||
+          "";
+
         setUserName(fullName || user?.email || "Usuario");
+        setProfileImageUrl(pictureUrl);
       } catch (error) {
         console.error("Error cargando usuario:", error);
-        if (active) setUserName("Usuario");
+        if (active) {
+          setUserName("Usuario");
+          setProfileImageUrl("");
+        }
       }
     };
 
@@ -209,15 +239,11 @@ export default function AppSidebar() {
             }`}
           >
             {collapsed ? (
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-amber-700 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
-                {initials}
-              </div>
+              renderAvatar("w-8 h-8", "text-xs")
             ) : (
               <>
                 <div className="flex items-center gap-2.5 mb-3">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-amber-700 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
-                    {initials}
-                  </div>
+                  {renderAvatar("w-8 h-8", "text-xs")}
 
                   <div className="min-w-0">
                     <div className="text-xs font-semibold text-white truncate">{userName}</div>
@@ -296,9 +322,7 @@ export default function AppSidebar() {
           onClick={() => setShowProfile(true)}
           className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all text-slate-500 hover:text-slate-300"
         >
-          <div className="w-[18px] h-[18px] rounded-full bg-gradient-to-br from-amber-500 to-amber-700 flex items-center justify-center text-[10px] font-bold text-white">
-            {initials.charAt(0)}
-          </div>
+          {renderAvatar("w-[18px] h-[18px]", "text-[10px]", true)}
           <span className="text-[9px] font-medium">Perfil</span>
         </button>
 
