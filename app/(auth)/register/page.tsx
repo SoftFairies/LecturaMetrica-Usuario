@@ -149,16 +149,6 @@ export default function RegisterPage() {
           required
         />
 
-        <Input
-          label="Meta anual de lectura"
-          type="number"
-          min={1}
-          placeholder="24"
-          value={annualGoal}
-          onChange={(e) => setAnnualGoal(Number(e.target.value))}
-          required
-        />
-
         <label className="flex items-start gap-3 rounded-xl border border-[#2E3D52] bg-[#111827]/60 p-3 text-xs text-slate-400 leading-relaxed">
           <input
             type="checkbox"

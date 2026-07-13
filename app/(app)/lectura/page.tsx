@@ -241,8 +241,8 @@ export default function LecturaPage() {
   const [showManual, setShowManual] = useState(false);
 
   const [personalNotes, setPersonalNotes] = useState("");
-  const [annotationPage, setAnnotationPage] = useState(1);
-  const [annotationChapter, setAnnotationChapter] = useState(1);
+  const [annotationPage, setAnnotationPage] = useState(0);
+  const [annotationChapter, setAnnotationChapter] = useState(0);
   const [annotationText, setAnnotationText] = useState("");
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
 
@@ -275,8 +275,8 @@ export default function LecturaPage() {
   const finalPage = clampValue(safeCurrentPage + safePagesRead, 1, maxPages);
   const finalChapter = clampValue(safeCurrentChapter + safeChaptersRead, 1, maxChapters);
 
-  const safeAnnotationPage = clampValue(annotationPage, 1, maxPages);
-  const safeAnnotationChapter = clampValue(annotationChapter, 1, maxChapters);
+  const safeAnnotationPage = clampValue(annotationPage, 0, maxPages);
+  const safeAnnotationChapter = clampValue(annotationChapter, 0, maxChapters);
 
   const progress = totalPages > 0 ? Math.min(100, Math.round((finalPage / totalPages) * 100)) : 0;
 
@@ -764,7 +764,7 @@ export default function LecturaPage() {
               <div className="flex items-center gap-2.5">
                 <button
                   type="button"
-                  onClick={() => setPagesRead((value) => Math.max(0, value - 1))}
+                  onClick={() => setPagesRead((value) => Math.max(0, value - 0 ))}
                   disabled={!enrollmentId || saving}
                   className="w-10 h-10 bg-[#1A2332] border border-[#2E3D52] rounded-xl text-slate-400 hover:text-white hover:border-[#3A4D66] flex items-center justify-center transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 >
@@ -808,7 +808,7 @@ export default function LecturaPage() {
               <div className="flex items-center gap-2.5">
                 <button
                   type="button"
-                  onClick={() => setChaptersRead((value) => Math.max(0, value - 1))}
+                  onClick={() => setChaptersRead((value) => Math.max(0, value - 0))}
                   disabled={!enrollmentId || saving}
                   className="w-10 h-10 bg-[#1A2332] border border-[#2E3D52] rounded-xl text-slate-400 hover:text-white hover:border-[#3A4D66] flex items-center justify-center transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 >
@@ -860,10 +860,10 @@ export default function LecturaPage() {
                     <input
                       type="number"
                       value={safeAnnotationPage}
-                      min={1}
+                      min={0}
                       max={maxPages}
                       onChange={(event) =>
-                        setAnnotationPage(clampValue(Number(event.target.value), 1, maxPages))
+                        setAnnotationPage(clampValue(Number(event.target.value), 0, maxPages))
                       }
                       className="w-full bg-[#1A2332] border border-[#2E3D52] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-amber-500/30"
                     />
@@ -876,10 +876,10 @@ export default function LecturaPage() {
                     <input
                       type="number"
                       value={safeAnnotationChapter}
-                      min={1}
+                      min={0}
                       max={maxChapters}
                       onChange={(event) =>
-                        setAnnotationChapter(clampValue(Number(event.target.value), 1, maxChapters))
+                        setAnnotationChapter(clampValue(Number(event.target.value), 0, maxChapters))
                       }
                       className="w-full bg-[#1A2332] border border-[#2E3D52] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-amber-500/30"
                     />

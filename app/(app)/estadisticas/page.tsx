@@ -62,6 +62,9 @@ const TOOLTIP_STYLE = {
   labelStyle: { color: "#CBD5E1" },
 };
 
+/** Estilo compartido para las etiquetas de los ejes (X y Y) de las graficas */
+const AXIS_LABEL_STYLE = { fill: "#9CA3AF", fontSize: 11 };
+
 type DashboardReport = {
   estimatedMinutesTotal?: number;
   completedBooks?: number;
@@ -101,7 +104,7 @@ function getStreakStyle(days: number) {
   if (days >= 15) {
     return {
       label: "Racha legendaria",
-      icon: "💙",
+      icon: "\uD83D\uDC99",
       color: "text-blue-400",
       bg: "bg-blue-500/10 border-blue-500/20",
     };
@@ -110,7 +113,7 @@ function getStreakStyle(days: number) {
   if (days >= 7) {
     return {
       label: "Racha fuerte",
-      icon: "💗",
+      icon: "\uD83D\uDC97",
       color: "text-pink-400",
       bg: "bg-pink-500/10 border-pink-500/20",
     };
@@ -119,7 +122,7 @@ function getStreakStyle(days: number) {
   if (days >= 3) {
     return {
       label: "Racha activa",
-      icon: "🔥",
+      icon: "\uD83D\uDD25",
       color: "text-orange-400",
       bg: "bg-orange-500/10 border-orange-500/20",
     };
@@ -127,7 +130,7 @@ function getStreakStyle(days: number) {
 
   return {
     label: "Racha en proceso",
-    icon: "○",
+    icon: "\u25CB",
     color: "text-slate-500",
     bg: "bg-slate-500/10 border-slate-500/20",
   };
@@ -248,7 +251,7 @@ export default function EstadisticasPage() {
           annualGoal > 0 ? Math.min(100, Math.round((completed / annualGoal) * 100)) : 0,
         );
       } catch (error) {
-        console.error("Error cargando dashboard de estadísticas:", error);
+        console.error("Error cargando dashboard de estadisticas:", error);
       }
     };
 
@@ -263,7 +266,7 @@ export default function EstadisticasPage() {
     <div className="p-5 lg:p-7 pb-24 md:pb-8">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>
-          Estadísticas
+          Estadisticas
         </h1>
         <p className="text-slate-500 text-sm mt-0.5">
           Tu progreso lector actualizado desde el dashboard de la API
@@ -273,37 +276,37 @@ export default function EstadisticasPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
         {[
           {
-            val: `${totalMin}`,
+            val: String(totalMin),
             label: "Minutos registrados",
-            icon: "⏱",
+            icon: "\u23F1",
             color: "text-amber-400",
             bg: "bg-amber-500/10 border-amber-500/20",
           },
           {
-            val: `${completedBooks} / ${goalBooks}`,
+            val: completedBooks + " / " + goalBooks,
             label: "Libros completados",
-            icon: "☑",
+            icon: "\u2611",
             color: "text-blue-400",
             bg: "bg-blue-500/10 border-blue-500/20",
           },
           {
-            val: `${currentStreak} día${currentStreak === 1 ? "" : "s"}`,
-            label: `${streakStyle.label} · récord ${maxStreak}`,
+            val: currentStreak + " dia" + (currentStreak === 1 ? "" : "s"),
+            label: streakStyle.label + " - record " + maxStreak,
             icon: streakStyle.icon,
             color: streakStyle.color,
             bg: streakStyle.bg,
           },
           {
-            val: `${dailyAvgPages}`,
-            label: "Páginas / día",
-            icon: "↗",
+            val: String(dailyAvgPages),
+            label: "Paginas / dia",
+            icon: "\u2197",
             color: "text-emerald-400",
             bg: "bg-emerald-500/10 border-emerald-500/20",
           },
         ].map(({ val, label, icon, color, bg }) => (
-          <div key={label} className={`bg-[#111827] border ${bg} rounded-2xl p-4`}>
-            <div className={`text-base mb-1.5 ${color}`}>{icon}</div>
-            <div className={`text-2xl font-bold ${color}`}>{val}</div>
+          <div key={label} className={"bg-[#111827] border " + bg + " rounded-2xl p-4"}>
+            <div className={"text-base mb-1.5 " + color}>{icon}</div>
+            <div className={"text-2xl font-bold " + color}>{val}</div>
             <div className="text-xs text-slate-500 mt-0.5 leading-tight">{label}</div>
           </div>
         ))}
@@ -314,13 +317,34 @@ export default function EstadisticasPage() {
           <h3 className="font-semibold text-white text-sm">Tiempo de lectura semanal</h3>
           <p className="text-[10px] text-slate-500 mb-4">Minutos devueltos por /reports/dashboard</p>
 
-          <ResponsiveContainer width="100%" height={190}>
-            <BarChart data={weeklyMinutes} barSize={22}>
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={weeklyMinutes} barSize={22} margin={{ top: 5, right: 10, left: 10, bottom: 20 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#1F2937" />
-              <XAxis dataKey="day" tick={{ fill: "#9CA3AF", fontSize: 10 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill: "#9CA3AF", fontSize: 10 }} axisLine={false} tickLine={false} />
+              <XAxis
+                dataKey="day"
+                tick={{ fill: "#9CA3AF", fontSize: 10 }}
+                axisLine={false}
+                tickLine={false}
+                label={{
+                  value: "Dia de la semana",
+                  position: "insideBottom",
+                  offset: -12,
+                  style: AXIS_LABEL_STYLE,
+                }}
+              />
+              <YAxis
+                tick={{ fill: "#9CA3AF", fontSize: 10 }}
+                axisLine={false}
+                tickLine={false}
+                label={{
+                  value: "Minutos",
+                  angle: -90,
+                  position: "insideLeft",
+                  style: AXIS_LABEL_STYLE,
+                }}
+              />
               <Tooltip {...TOOLTIP_STYLE} />
-              <Legend />
+              <Legend verticalAlign="top" height={28} wrapperStyle={{ fontSize: 11 }} />
               <Bar dataKey="min" name="Minutos" fill="#D4890A" radius={[4, 4, 0, 0]}>
                 <LabelList dataKey="min" position="top" fill="#CBD5E1" fontSize={10} />
               </Bar>
@@ -329,17 +353,38 @@ export default function EstadisticasPage() {
         </div>
 
         <div className="bg-[#111827] border border-[#1A2332] rounded-2xl p-5">
-          <h3 className="font-semibold text-white text-sm">Páginas registradas por día</h3>
-          <p className="text-[10px] text-slate-500 mb-4">Páginas devueltas por /reports/dashboard</p>
+          <h3 className="font-semibold text-white text-sm">Paginas registradas por dia</h3>
+          <p className="text-[10px] text-slate-500 mb-4">Paginas devueltas por /reports/dashboard</p>
 
-          <ResponsiveContainer width="100%" height={190}>
-            <LineChart data={dailyPages}>
+          <ResponsiveContainer width="100%" height={220}>
+            <LineChart data={dailyPages} margin={{ top: 5, right: 10, left: 10, bottom: 20 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#1F2937" />
-              <XAxis dataKey="day" tick={{ fill: "#9CA3AF", fontSize: 10 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill: "#9CA3AF", fontSize: 10 }} axisLine={false} tickLine={false} />
+              <XAxis
+                dataKey="day"
+                tick={{ fill: "#9CA3AF", fontSize: 10 }}
+                axisLine={false}
+                tickLine={false}
+                label={{
+                  value: "Dia del mes",
+                  position: "insideBottom",
+                  offset: -12,
+                  style: AXIS_LABEL_STYLE,
+                }}
+              />
+              <YAxis
+                tick={{ fill: "#9CA3AF", fontSize: 10 }}
+                axisLine={false}
+                tickLine={false}
+                label={{
+                  value: "Paginas",
+                  angle: -90,
+                  position: "insideLeft",
+                  style: AXIS_LABEL_STYLE,
+                }}
+              />
               <Tooltip {...TOOLTIP_STYLE} />
-              <Legend />
-              <Line type="monotone" dataKey="pages" name="Páginas" stroke="#3B82F6" strokeWidth={2} dot={false} />
+              <Legend verticalAlign="top" height={28} wrapperStyle={{ fontSize: 11 }} />
+              <Line type="monotone" dataKey="pages" name="Paginas" stroke="#3B82F6" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -347,7 +392,7 @@ export default function EstadisticasPage() {
 
       <div className="grid md:grid-cols-2 gap-4">
         <div className="bg-[#111827] border border-[#1A2332] rounded-2xl p-5">
-          <h3 className="font-semibold text-white text-sm mb-1">Distribución de biblioteca</h3>
+          <h3 className="font-semibold text-white text-sm mb-1">Distribucion de biblioteca</h3>
           <p className="text-[10px] text-slate-500 mb-4">
             Datos reales enviados por /reports/dashboard
           </p>
@@ -364,7 +409,7 @@ export default function EstadisticasPage() {
                 nameKey="name"
                 paddingAngle={3}
                 strokeWidth={0}
-                label={({ name, value }) => `${name}: ${value}`}
+                label={(entry) => entry.name + ": " + entry.value}
               >
                 {distrib.map((d) => (
                   <Cell key={d.name} fill={d.color} />
@@ -391,7 +436,7 @@ export default function EstadisticasPage() {
           <h3 className="font-semibold text-white text-sm mb-3">Meta anual</h3>
 
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-base font-bold text-white">{completedBooks} libros leídos</span>
+            <span className="text-base font-bold text-white">{completedBooks} libros leidos</span>
             <div className="flex items-center gap-2">
               <span className="text-xs text-slate-400">meta anual: {goalBooks > 0 ? goalBooks : "sin definir"}</span>
               <div className="w-10 h-10 rounded-full bg-amber-600/20 border-2 border-amber-600/40 flex items-center justify-center">
@@ -401,12 +446,12 @@ export default function EstadisticasPage() {
           </div>
 
           <div className="w-full h-2 bg-[#2E3D52] rounded-full overflow-hidden mb-1">
-            <div className="h-full bg-amber-500 rounded-full" style={{ width: `${goalProgress}%` }} />
+            <div className="h-full bg-amber-500 rounded-full" style={{ width: goalProgress + "%" }} />
           </div>
 
           <p className="text-[10px] text-slate-500 mb-4">
             {goalBooks > 0
-              ? `${goalProgress}% completado · ${Math.max(0, goalBooks - completedBooks)} libros restantes`
+              ? goalProgress + "% completado - " + Math.max(0, goalBooks - completedBooks) + " libros restantes"
               : "Meta anual no definida"}
           </p>
 
@@ -414,16 +459,15 @@ export default function EstadisticasPage() {
             {monthlyGoal.map(({ month, books }) => (
               <div
                 key={month}
-                className={`rounded-xl p-2.5 text-center border ${
-                  books > 0
-                    ? "bg-amber-700/20 border-amber-700/30"
-                    : "bg-[#1A2332] border-[#2E3D52]"
-                }`}
+                className={
+                  "rounded-xl p-2.5 text-center border " +
+                  (books > 0 ? "bg-amber-700/20 border-amber-700/30" : "bg-[#1A2332] border-[#2E3D52]")
+                }
               >
-                <div className={`text-[10px] font-semibold ${books > 0 ? "text-amber-400" : "text-slate-600"}`}>
+                <div className={"text-[10px] font-semibold " + (books > 0 ? "text-amber-400" : "text-slate-600")}>
                   {month}
                 </div>
-                <div className={`text-xl font-bold mt-0.5 ${books > 0 ? "text-white" : "text-slate-700"}`}>
+                <div className={"text-xl font-bold mt-0.5 " + (books > 0 ? "text-white" : "text-slate-700")}>
                   {books}
                 </div>
               </div>

@@ -9,6 +9,7 @@ import {
   Pencil,
   Sparkles,
   Heart,
+  MoreVertical,
 } from "lucide-react";
 import Swal from "sweetalert2";
 import { api, BookResponse } from "@/data/api";
@@ -165,6 +166,19 @@ const getBookChaptersFromResponse = (book: any): number | null => {
   return Number.isFinite(parsed) && parsed > 0 ? Math.trunc(parsed) : null;
 };
 
+// El backend, cuando no puede leer/validar el body, responde con un mensaje
+// técnico ("El cuerpo de la petición (Body JSON) es requerido o tiene un
+// formato inválido") que no le dice al usuario qué hacer. Como no siempre
+// podemos anticipar cada validación del backend en el cliente, esto traduce
+// ese mensaje genérico a algo accionable en vez de mostrar el JSON crudo.
+const friendlyBookSaveError = (err: any): string => {
+  const raw = String(err?.message || "");
+  if (/cuerpo de la petici[oó]n|body json|json inv[aá]lido/i.test(raw)) {
+    return "No se pudo agregar el libro. Revisa que el título, autor, páginas y capítulos estén completos.";
+  }
+  return raw || "No se pudo agregar el libro.";
+};
+
 function CoverThumb({
   cover,
   index = 0,
@@ -249,13 +263,9 @@ function RecommendedBookCard({
 function BookCard({
   book,
   onClick,
-  onDelete,
-  onEdit,
 }: {
   book: Book;
   onClick: () => void;
-  onDelete: () => void;
-  onEdit: () => void;
 }) {
   return (
     <div
@@ -264,30 +274,6 @@ function BookCard({
     >
       <div className="w-full h-40 relative">
         <CoverThumb cover={book.cover} className="w-full h-full absolute inset-0" />
-
-        <button
-          type="button"
-          title="Editar"
-          className="absolute top-2 left-2 w-6 h-6 bg-black/50 backdrop-blur-sm rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-amber-400 hover:bg-amber-600/40"
-          onClick={(e) => {
-            e.stopPropagation();
-            onEdit();
-          }}
-        >
-          <Pencil size={11} />
-        </button>
-
-        <button
-          type="button"
-          title="Eliminar"
-          className="absolute top-2 right-2 w-6 h-6 bg-black/50 backdrop-blur-sm rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:bg-red-600/40"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete();
-          }}
-        >
-          <Trash2 size={11} />
-        </button>
 
         {book.isFavorite && (
           <div className="absolute top-2 left-1/2 -translate-x-1/2 w-6 h-6 bg-black/50 backdrop-blur-sm rounded-md flex items-center justify-center text-pink-400">
@@ -305,6 +291,7 @@ function BookCard({
             {book.status}
           </span>
         </div>
+
       </div>
 
       <div className="p-3">
@@ -338,7 +325,7 @@ function AddBookModal({
   onClose: () => void;
   onAdded?: () => void;
 }) {
-  const [tab, setTab] = useState<"search" | "manual">("manual");
+  const [tab, setTab] = useState<"search" | "manual">("search");
   const [selectedColor, setSelectedColor] = useState(0);
   const [title, setTitle] = useState("");
   const [totalPagesInput, setTotalPagesInput] = useState("");
@@ -432,6 +419,15 @@ function AddBookModal({
 
     if (!selectedBook && !title.trim()) {
       setError("El titulo es obligatorio.");
+      return;
+    }
+
+    // El backend requiere al menos un autor para crear un libro nuevo. Antes
+    // esto no se validaba aquí y el backend lo rechazaba con un error
+    // técnico de "JSON inválido" que no explicaba nada -- ahora se avisa
+    // claro, antes de siquiera mandar la petición.
+    if (!selectedBook && !selectedAuthor && !authorSearch.trim()) {
+      setError("Escribe o selecciona un autor (si no existe, se creará automáticamente).");
       return;
     }
 
@@ -550,7 +546,7 @@ function AddBookModal({
       onAdded?.();
       onClose();
     } catch (err: any) {
-      setError((err && err.message) || "No se pudo agregar el libro.");
+      setError(friendlyBookSaveError(err));
     } finally {
       setAdding(false);
     }
@@ -784,7 +780,7 @@ function AddBookModal({
                 </label>
                 <input
                   type="number"
-                  min={1}
+                  min={0}
                   value={totalPagesInput}
                   onChange={(e) => setTotalPagesInput(e.target.value)}
                   placeholder="Ej. 432"
@@ -798,7 +794,7 @@ function AddBookModal({
                 </label>
                 <input
                   type="number"
-                  min={1}
+                  min={0}
                   value={totalChaptersInput}
                   onChange={(e) => setTotalChaptersInput(e.target.value)}
                   placeholder="Ej. 20"
@@ -918,6 +914,14 @@ function AddBookModal({
               </>
             )}
 
+            {/* Cuando el dropdown de sugerencias (autor/género) está abierto,
+                reserva espacio abajo para que siempre se pueda hacer scroll
+                y ver el botón "Continuar", en vez de quedar tapado. */}
+            {((!selectedAuthor && authorSearch.trim().length > 0) ||
+              (!selectedGenre && genreSearch.trim().length > 0)) && (
+              <div className="h-52" aria-hidden="true" />
+            )}
+
             {error && <p className="text-red-400 text-xs mb-2">{error}</p>}
 
             <button
@@ -989,7 +993,7 @@ function EditBookModal({
     };
 
     void loadCatalogs();
-  }, [book.status]);
+  }, [book.status, book.format, book.formatId]);
 
   const handleSave = async () => {
     if (saving) return;
@@ -1206,9 +1210,20 @@ function EditBookModal({
   );
 }
 
-function BookDetailModal({ book, onClose }: { book: Book; onClose: () => void }) {
+function BookDetailModal({
+  book,
+  onClose,
+  onEdit,
+  onDelete,
+}: {
+  book: Book;
+  onClose: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
   const [notes, setNotes] = useState<BookNote[]>([]);
   const [loadingNotes, setLoadingNotes] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -1260,6 +1275,49 @@ function BookDetailModal({ book, onClose }: { book: Book; onClose: () => void })
           >
             <X size={13} />
           </button>
+
+          <div className="absolute top-3 right-12">
+            <button
+              type="button"
+              onClick={() => setShowMenu((v) => !v)}
+              title="Más opciones"
+              className="w-7 h-7 bg-black/50 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-black/70 transition-colors"
+            >
+              <MoreVertical size={13} />
+            </button>
+
+            {showMenu && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
+                <div className="absolute right-0 top-9 z-20 w-40 bg-[#1A2332] border border-[#2E3D52] rounded-xl shadow-xl shadow-black/40 overflow-hidden py-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowMenu(false);
+                      onEdit();
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-slate-200 hover:bg-[#243044] hover:text-white transition-colors"
+                  >
+                    <Pencil size={13} className="text-amber-400" />
+                    Editar
+                  </button>
+                  <div className="h-px bg-[#2E3D52] mx-2" />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowMenu(false);
+                      onDelete();
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                  >
+                    <Trash2 size={13} />
+                    Eliminar
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+
           <div className="absolute bottom-3 left-3">
             <span
               className={
@@ -1417,7 +1475,7 @@ export default function BibliotecaPage() {
   const [loading, setLoading] = useState(false);
 
   const [recommendations, setRecommendations] = useState<BookResponse[]>([]);
-  const [recDismissed, setRecDismissed] = useState(false);
+  const [dismissedRecIds, setDismissedRecIds] = useState<Set<string>>(new Set());
   const [addingRec, setAddingRec] = useState(false);
   const [defaultFormatId, setDefaultFormatId] = useState<number | null>(null);
   const [defaultStatusId, setDefaultStatusId] = useState<number | null>(null);
@@ -1503,16 +1561,18 @@ export default function BibliotecaPage() {
   }, []);
 
   const featuredRecommendation = useMemo(() => {
-    if (recDismissed || recommendations.length === 0) return null;
+    if (recommendations.length === 0) return null;
     const ownedBookIds: Record<string, boolean> = {};
     books.forEach((b) => {
       if (b.bookId) ownedBookIds[b.bookId] = true;
     });
     for (let i = 0; i < recommendations.length; i++) {
-      if (!ownedBookIds[recommendations[i].id]) return recommendations[i];
+      const rec = recommendations[i];
+      const key = rec.id || rec.title;
+      if (!ownedBookIds[rec.id] && !dismissedRecIds.has(key)) return rec;
     }
     return null;
-  }, [recommendations, books, recDismissed]);
+  }, [recommendations, books, dismissedRecIds]);
 
   const handleAddRecommendation = async () => {
     if (!featuredRecommendation) return;
@@ -1630,7 +1690,7 @@ export default function BibliotecaPage() {
       await Swal.fire({
         icon: "error",
         title: "No se pudo agregar",
-        text: (err && err.message) || "Intenta de nuevo en unos segundos.",
+        text: friendlyBookSaveError(err),
       });
     } finally {
       setAddingRec(false);
@@ -1684,7 +1744,13 @@ export default function BibliotecaPage() {
           book={featuredRecommendation}
           adding={addingRec}
           onAdd={() => void handleAddRecommendation()}
-          onDismiss={() => setRecDismissed(true)}
+          onDismiss={() =>
+            setDismissedRecIds((prev) => {
+              const next = new Set(prev);
+              next.add(featuredRecommendation.id || featuredRecommendation.title);
+              return next;
+            })
+          }
         />
       )}
 
@@ -1773,8 +1839,6 @@ export default function BibliotecaPage() {
             key={book.id}
             book={book}
             onClick={() => setSelectedBook(book)}
-            onEdit={() => setEditBook(book)}
-            onDelete={() => setDeleteBook(book)}
           />
         ))}
 
@@ -1795,7 +1859,22 @@ export default function BibliotecaPage() {
         </button>
       </div>
 
-      {selectedBook && <BookDetailModal book={selectedBook} onClose={() => setSelectedBook(null)} />}
+      {selectedBook && (
+        <BookDetailModal
+          book={selectedBook}
+          onClose={() => setSelectedBook(null)}
+          onEdit={() => {
+            const book = selectedBook;
+            setSelectedBook(null);
+            setEditBook(book);
+          }}
+          onDelete={() => {
+            const book = selectedBook;
+            setSelectedBook(null);
+            setDeleteBook(book);
+          }}
+        />
+      )}
       {editBook && (
         <EditBookModal
           book={editBook}

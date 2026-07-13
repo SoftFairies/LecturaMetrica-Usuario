@@ -1,18 +1,30 @@
 import type { Metadata, Viewport } from "next";
+import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { AuthProvider } from "@/lib/auth-context";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
+import InstallAppButton from "@/components/InstallAppButton";
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const playfairDisplay = Playfair_Display({
+  subsets: ["latin"],
+  weight: ["400", "600", "700"],
+  style: ["normal", "italic"],
+  variable: "--font-playfair",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "LecturaMetrica",
   description: "Tu plataforma de seguimiento literario",
-  // No se declara `manifest` a mano: al existir app/manifest.json (archivo
-  // especial de Next.js), Next ya genera automáticamente el <link
-  // rel="manifest"> apuntando a la URL real que él mismo sirve
-  // (/manifest.webmanifest). Declararlo aquí como "/manifest.json" apuntaba
-  // a una ruta que no existe -> 404 -> el navegador nunca tuvo un manifest
-  // válido, y por eso no había opción de "Instalar app".
+  manifest: "/manifest.json",
 };
 
 export const viewport: Viewport = {
@@ -23,17 +35,23 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es" suppressHydrationWarning>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet" />
-      </head>
-      <body className="bg-[#0D1117] text-white antialiased" suppressHydrationWarning>
+    <html
+      lang="es"
+      suppressHydrationWarning
+      className={inter.variable + " " + playfairDisplay.variable}
+    >
+      <body
+        className="bg-[#0D1117] text-white antialiased"
+        style={{ fontFamily: "var(--font-inter), system-ui, sans-serif" }}
+        suppressHydrationWarning
+      >
+        <body>
         <ServiceWorkerRegister />
-        <ThemeProvider>
-          <AuthProvider>{children}</AuthProvider>
-        </ThemeProvider>
+
+        {children}
+
+        <InstallAppButton />
+        </body>
       </body>
     </html>
   );

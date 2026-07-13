@@ -2,26 +2,30 @@
 
 import { useEffect } from "react";
 
-
 export default function ServiceWorkerRegister() {
   useEffect(() => {
-    if (typeof window === "undefined") return;
     if (!("serviceWorker" in navigator)) return;
 
-    navigator.serviceWorker
-      .register("/sw.js")
-      .catch((err) => console.warn("No se pudo registrar el service worker:", err));
+    const registerServiceWorker = async () => {
+      try {
+        const registration = await navigator.serviceWorker.register("/sw.js", {
+          scope: "/",
+          updateViaCache: "none",
+        });
 
-    let refreshing = false;
-    const handleControllerChange = () => {
-      if (refreshing) return;
-      refreshing = true;
-      window.location.reload();
+        console.log(
+          "Service Worker registrado correctamente:",
+          registration.scope
+        );
+      } catch (error) {
+        console.error("No se pudo registrar el Service Worker:", error);
+      }
     };
 
-    navigator.serviceWorker.addEventListener("controllerchange", handleControllerChange);
+    window.addEventListener("load", registerServiceWorker);
+
     return () => {
-      navigator.serviceWorker.removeEventListener("controllerchange", handleControllerChange);
+      window.removeEventListener("load", registerServiceWorker);
     };
   }, []);
 
