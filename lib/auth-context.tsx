@@ -43,7 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     refreshUser().finally(() => setLoading(false));
-  }, []);
+  }, [refreshUser]);
   useEffect(() => {
     const handleUnauthorized = () => setUser(null);
     window.addEventListener("lecturametrica:unauthorized", handleUnauthorized);
