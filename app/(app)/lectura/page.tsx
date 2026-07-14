@@ -764,7 +764,7 @@ export default function LecturaPage() {
               <div className="flex items-center gap-2.5">
                 <button
                   type="button"
-                  onClick={() => setPagesRead((value) => Math.max(0, value - 0 ))}
+                  onClick={() => setPagesRead((value) => Math.max(0, value - 1 ))}
                   disabled={!enrollmentId || saving}
                   className="w-10 h-10 bg-[#1A2332] border border-[#2E3D52] rounded-xl text-slate-400 hover:text-white hover:border-[#3A4D66] flex items-center justify-center transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 >
@@ -808,7 +808,7 @@ export default function LecturaPage() {
               <div className="flex items-center gap-2.5">
                 <button
                   type="button"
-                  onClick={() => setChaptersRead((value) => Math.max(0, value - 0))}
+                  onClick={() => setChaptersRead((value) => Math.max(0, value - 1))}
                   disabled={!enrollmentId || saving}
                   className="w-10 h-10 bg-[#1A2332] border border-[#2E3D52] rounded-xl text-slate-400 hover:text-white hover:border-[#3A4D66] flex items-center justify-center transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 >

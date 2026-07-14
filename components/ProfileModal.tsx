@@ -28,7 +28,7 @@ export default function ProfileModal({ onClose }: ProfileModalProps) {
 
   const [user, setUser] = useState<any | null>(null);
   const [stats, setStats] = useState({ completed: 0, reading: 0, pages: 0 });
-  const [annualGoal, setAnnualGoal] = useState(24);
+  const [annualGoal, setAnnualGoal] = useState(0);
 
   const [badges, setBadges] = useState<ApiBadge[]>([]);
   const [earnedBadgeKeys, setEarnedBadgeKeys] = useState<Record<string, boolean>>({});
@@ -53,22 +53,6 @@ export default function ProfileModal({ onClose }: ProfileModalProps) {
 
   useEffect(() => {
     setMounted(true);
-
-    try {
-      if (typeof window !== "undefined") {
-        const savedGoal =
-          window.localStorage.getItem("lecturametrica_annual_goal") ||
-          window.localStorage.getItem("annualGoal") ||
-          window.localStorage.getItem("readingGoal");
-
-        const parsedGoal = Number(savedGoal);
-
-        if (Number.isFinite(parsedGoal) && parsedGoal > 0) {
-          setAnnualGoal(parsedGoal);
-        }
-      }
-    } catch {
-    }
   }, []);
 
   useEffect(() => {
@@ -82,10 +66,15 @@ export default function ProfileModal({ onClose }: ProfileModalProps) {
         setUser(me);
 
         const backendGoal = Number((me as any)?.annualGoal);
+
         if (Number.isFinite(backendGoal) && backendGoal > 0) {
-          setAnnualGoal(backendGoal);
+          setAnnualGoal(Math.trunc(backendGoal));
+        } else {
+          setAnnualGoal(0);
         }
-      } catch {
+      } catch (error) {
+        console.error("No se pudo cargar la meta anual desde /users/me:", error);
+        if (active) setAnnualGoal(0);
       }
 
       try {
@@ -156,7 +145,13 @@ export default function ProfileModal({ onClose }: ProfileModalProps) {
 
         setFavoriteGenres(
           Array.isArray(preferences?.genres)
-            ? preferences.genres.map((genre: any) => genre.name).filter(Boolean)
+            ? preferences.genres
+                .map((genre: any) =>
+                  typeof genre === "string"
+                    ? genre
+                    : genre?.name ?? genre?.genreName ?? "",
+                )
+                .filter((genreName: string) => genreName.trim().length > 0)
             : [],
         );
       } catch {
@@ -384,7 +379,7 @@ export default function ProfileModal({ onClose }: ProfileModalProps) {
             <div className="bg-[#1A2332] border border-[#2E3D52] rounded-xl p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-semibold text-white">Meta anual {currentYear}</span>
-                <span className="text-xs font-bold text-amber-400">{stats.completed} / {annualGoal} libros</span>
+                <span className="text-xs font-bold text-amber-400">{annualGoal > 0 ? `${stats.completed} / ${annualGoal} libros` : "Meta sin definir"}</span>
               </div>
 
               <div className="w-full h-1.5 bg-[#2E3D52] rounded-full overflow-hidden mb-1">
@@ -392,7 +387,7 @@ export default function ProfileModal({ onClose }: ProfileModalProps) {
               </div>
 
               <p className="text-[10px] text-slate-500">
-                {goalProgress}% completado · {remainingBooks} libros restantes
+                {annualGoal > 0 ? `${goalProgress}% completado · ${remainingBooks} libros restantes` : "Configura tu meta anual en el registro o perfil."}
               </p>
             </div>
 

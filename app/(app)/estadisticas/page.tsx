@@ -22,7 +22,8 @@ import { api } from "@/data/api";
 const STATUS_COLORS: Record<string, string> = {
   Completados: "#D4890A",
   "En progreso": "#3B82F6",
-  "Por leer": "#2E3D52",
+  "Por leer": "#64748B",
+  Abandonados: "#EF4444",
 };
 
 const DEFAULT_WEEKLY = [
@@ -62,7 +63,6 @@ const TOOLTIP_STYLE = {
   labelStyle: { color: "#CBD5E1" },
 };
 
-/** Estilo compartido para las etiquetas de los ejes (X y Y) de las graficas */
 const AXIS_LABEL_STYLE = { fill: "#9CA3AF", fontSize: 11 };
 
 type DashboardReport = {
@@ -194,6 +194,7 @@ export default function EstadisticasPage() {
     { name: "Completados", value: 0, color: STATUS_COLORS.Completados },
     { name: "En progreso", value: 0, color: STATUS_COLORS["En progreso"] },
     { name: "Por leer", value: 0, color: STATUS_COLORS["Por leer"] },
+    { name: "Abandonados", value: 0, color: STATUS_COLORS.Abandonados },
   ]);
 
   const [totalMin, setTotalMin] = useState(0);
@@ -212,32 +213,83 @@ export default function EstadisticasPage() {
 
     const load = async () => {
       try {
-        const dashboard = (await api.reports.getDashboard()) as DashboardReport;
+        const [dashboard, me, libraryPage] = await Promise.all([
+          api.reports.getDashboard() as Promise<DashboardReport>,
+          api.users.getMe().catch(() => null),
+          api.library.getAll({ page: 0, size: 100 }).catch(() => ({ content: [] })),
+        ]);
+
         if (!active) return;
 
         const completed = safeNumber(dashboard.completedBooks, 0);
-        const annualGoal = safeNumber(dashboard.annualGoal, 0);
+
+        /*
+          La meta anual pertenece al perfil del usuario.
+          Se toma primero desde GET /users/me y solo se usa el dashboard
+          como respaldo si el perfil no trae annualGoal.
+        */
+        const userAnnualGoal = safeNumber((me as any)?.annualGoal, 0);
+        const dashboardAnnualGoal = safeNumber(dashboard.annualGoal, 0);
+        const annualGoal = userAnnualGoal > 0 ? userAnnualGoal : dashboardAnnualGoal;
+
         const current = safeNumber(dashboard.currentStreak, 0);
 
         setWeeklyMinutes(normalizeWeeklyMinutes(dashboard.weeklyReadingMinutes));
         setDailyPages(normalizeMonthlyPages(dashboard.monthlyPagesRead));
         setMonthlyGoal(normalizeAnnualProgress(dashboard.annualProgress));
 
+        const libraryItems = Array.isArray(libraryPage)
+          ? libraryPage
+          : Array.isArray((libraryPage as any)?.content)
+            ? (libraryPage as any).content
+            : [];
+
+        const libraryDistribution = libraryItems.reduce(
+          (acc: { completed: number; inProgress: number; toRead: number; abandoned: number }, item: any) => {
+            const status = String(item?.readingStatusName ?? "")
+              .trim()
+              .toLowerCase();
+
+            if (status === "terminado" || status === "completado") {
+              acc.completed += 1;
+            } else if (status === "leyendo" || status === "en progreso") {
+              acc.inProgress += 1;
+            } else if (status === "abandonado") {
+              acc.abandoned += 1;
+            } else if (status === "por leer" || status === "por leer ") {
+              acc.toRead += 1;
+            }
+
+            return acc;
+          },
+          { completed: 0, inProgress: 0, toRead: 0, abandoned: 0 },
+        );
+
+        console.log("Distribución de biblioteca:", {
+          desdeBiblioteca: libraryDistribution,
+          desdeDashboard: dashboard.libraryDistribution,
+        });
+
         setDistrib([
           {
             name: "Completados",
-            value: safeNumber(dashboard.libraryDistribution?.completed, 0),
+            value: libraryDistribution.completed,
             color: STATUS_COLORS.Completados,
           },
           {
             name: "En progreso",
-            value: safeNumber(dashboard.libraryDistribution?.inProgress, 0),
+            value: libraryDistribution.inProgress,
             color: STATUS_COLORS["En progreso"],
           },
           {
             name: "Por leer",
-            value: safeNumber(dashboard.libraryDistribution?.toRead, 0),
+            value: libraryDistribution.toRead,
             color: STATUS_COLORS["Por leer"],
+          },
+          {
+            name: "Abandonados",
+            value: libraryDistribution.abandoned,
+            color: STATUS_COLORS.Abandonados,
           },
         ]);
 
@@ -246,6 +298,12 @@ export default function EstadisticasPage() {
         setDailyAvgPages(safeNumber(dashboard.pagesPerDayAvg, 0));
         setCurrentStreak(current);
         setMaxStreak(current);
+        console.log("Meta anual:", {
+          usersMe: userAnnualGoal,
+          dashboard: dashboardAnnualGoal,
+          usadaEnVista: annualGoal,
+        });
+
         setGoalBooks(annualGoal);
         setGoalProgress(
           annualGoal > 0 ? Math.min(100, Math.round((completed / annualGoal) * 100)) : 0,
@@ -269,7 +327,7 @@ export default function EstadisticasPage() {
           Estadisticas
         </h1>
         <p className="text-slate-500 text-sm mt-0.5">
-          Tu progreso lector actualizado desde el dashboard de la API
+          Tu progreso lector actualizado
         </p>
       </div>
 
@@ -394,7 +452,7 @@ export default function EstadisticasPage() {
         <div className="bg-[#111827] border border-[#1A2332] rounded-2xl p-5">
           <h3 className="font-semibold text-white text-sm mb-1">Distribucion de biblioteca</h3>
           <p className="text-[10px] text-slate-500 mb-4">
-            Datos reales enviados por /reports/dashboard
+            Estados actuales obtenidos desde tu biblioteca
           </p>
 
           <div className="flex items-center gap-6">

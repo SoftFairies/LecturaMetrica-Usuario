@@ -158,14 +158,6 @@ export default function BuzonPage() {
           }
         }
 
-        const lastPassed = localStorage.getItem(`${key}:passed`);
-        if (lastPassed) {
-          const hours = (Date.now() - Number(lastPassed)) / (1000 * 60 * 60);
-          if (hours < 24) {
-            setHoursLeft(Math.ceil(24 - hours));
-            setOpened(false);
-          }
-        }
       }
 
       try {
@@ -471,12 +463,7 @@ export default function BuzonPage() {
 
   const handlePassLetter = () => {
     setOpened(false);
-
-    if (cooldownKey) {
-      localStorage.setItem(`${cooldownKey}:passed`, String(Date.now()));
-    }
-
-    setHoursLeft(24);
+    setLiked(null);
   };
 
   return (
@@ -604,10 +591,7 @@ export default function BuzonPage() {
         <p className={`text-center text-xs ${mutedText}`}>
           Abre tu carta diaria — una recomendación anónima de otro lector
         </p>
-        <p className={`text-center text-xs ${mutedText}`}>
-          Para activarlo debes mandar tu carta anonima
-        </p>
-
+        
         <div className="max-w-lg mx-auto">
           <div className={`text-[10px] font-bold ${mutedText} uppercase tracking-widest mb-1`}>
             Enviar una carta
