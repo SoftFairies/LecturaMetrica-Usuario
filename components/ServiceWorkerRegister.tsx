@@ -4,29 +4,32 @@ import { useEffect } from "react";
 
 export default function ServiceWorkerRegister() {
   useEffect(() => {
-    if (!("serviceWorker" in navigator)) return;
+    if (!("serviceWorker" in navigator)) {
+      console.warn("Este navegador no soporta Service Workers.");
+      return;
+    }
 
-    const registerServiceWorker = async () => {
+    const register = async () => {
       try {
+        const oldRegistrations =
+          await navigator.serviceWorker.getRegistrations();
+
+        for (const registration of oldRegistrations) {
+          await registration.update();
+        }
+
         const registration = await navigator.serviceWorker.register("/sw.js", {
           scope: "/",
           updateViaCache: "none",
         });
 
-        console.log(
-          "Service Worker registrado correctamente:",
-          registration.scope
-        );
+        console.log("PWA: Service Worker registrado:", registration.scope);
       } catch (error) {
-        console.error("No se pudo registrar el Service Worker:", error);
+        console.error("PWA: error registrando Service Worker:", error);
       }
     };
 
-    window.addEventListener("load", registerServiceWorker);
-
-    return () => {
-      window.removeEventListener("load", registerServiceWorker);
-    };
+    void register();
   }, []);
 
   return null;

@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import "./globals.css";
+
 import { AuthProvider } from "@/lib/auth-context";
 import { ThemeProvider } from "@/components/ThemeProvider";
+
+import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
+import InstallAppButton from "@/components/InstallAppButton";
 
 export const metadata: Metadata = {
   title: "LecturaMétrica",
@@ -17,7 +21,13 @@ export default function RootLayout({
     <html lang="es" suppressHydrationWarning>
       <body>
         <ThemeProvider>
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>
+            <ServiceWorkerRegister />
+
+            {children}
+
+            <InstallAppButton />
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
