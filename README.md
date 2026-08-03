@@ -46,3 +46,22 @@ Cualquier correo y contraseña — redirige directo a /biblioteca.
 | `/lectura` | Sesión de lectura con temporizador |
 | `/estadisticas` | Gráficas de progreso |
 | `/buzon` | Buzón literario anónimo |
+
+
+Este proyecto fue desarrollado con apoyo de las siguientes herramientas de inteligencia artificial:
+
+| Herramienta | Uso en el proyecto |
+|---|---|
+| **ChatGPT (OpenAI)** | Resolución de errores de TypeScript en componentes, consultas sobre comportamiento de hooks de React y apoyo en decisiones de estructura de carpetas del frontend |
+| **Gemini (Google)** | Apoyo en búsquedas de documentación, revisión de lógica de negocio y sugerencias sobre diseño de la API REST |
+
+## Documentación de referencia
+
+- [Next.js Docs](https://nextjs.org/docs)
+- [Tailwind CSS Docs](https://tailwindcss.com/docs)
+- [Recharts Docs](https://recharts.org/)
+- [Lucide Icons](https://lucide.dev/)
+- [Spring Boot Security](https://spring.io/projects/spring-security)
+- [Auth0 Java JWT](https://github.com/auth0/java-jwt)
+
+Este proyecto fue desarrollado con finos académicos para la Universidad Politécnica de Chiapas por el equipo de SoftFairies.
